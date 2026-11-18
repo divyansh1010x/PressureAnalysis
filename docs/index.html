@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pressure Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#101010;--panel:#1a1a19;--panel2:#232321;--panel3:#2b2b28;--line:#383835;--line2:#2c2c2a;
+  --text:#f0efec;--text2:#c3c2b7;--muted:#8e8d86;
+  --blue:#3987e5;--orange:#d95926;--aqua:#199e70;--yellow:#c98500;--magenta:#d55181;--green:#0ca30c;--violet:#9085e9;--red:#e66767;
+  --accent:#d55181;--good:#0ca30c;--bad:#e66767;--mid:#383835;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  display:grid;grid-template-columns:232px minmax(0,1fr);grid-template-rows:58px minmax(0,1fr);overflow:hidden}
+a{color:var(--blue);text-decoration:none;cursor:pointer}
+a:hover{text-decoration:underline}
+button{font:inherit;color:inherit}
+/* sidebar */
+#side{grid-row:1/3;background:#141413;border-right:1px solid var(--line2);display:flex;flex-direction:column;min-height:0}
+.brand{height:58px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--line2)}
+.brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#7a2c8f);display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand b{font-size:15px;letter-spacing:.2px}.brand small{display:block;color:var(--muted);font-size:11px;margin-top:-2px}
+#nav{padding:10px 10px;display:flex;flex-direction:column;gap:2px;overflow:auto}
+#nav .grp{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 10px 4px}
+#nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:9px;color:var(--text2);font-weight:500;text-decoration:none}
+#nav a svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#nav a:hover{background:var(--panel2);color:var(--text)}
+#nav a.on{background:var(--panel3);color:var(--text);box-shadow:inset 3px 0 0 var(--accent)}
+.sidefoot{margin-top:auto;padding:12px 18px;color:var(--muted);font-size:11.5px;border-top:1px solid var(--line2)}
+/* top bar */
+#top{display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--line2);background:#141413;min-width:0}
+#burger{display:none;background:none;border:0;padding:6px;cursor:pointer}
+#crumb{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#crumb span{color:var(--muted);font-weight:500}
+.search{margin-left:auto;position:relative;width:min(420px,46vw)}
+.search input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px 8px 34px;color:var(--text);font:inherit;outline:none}
+.search input:focus{border-color:var(--blue)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:2}
+.search kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font:11px Inter;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px}
+#results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px #0009;max-height:60vh;overflow:auto;z-index:30;display:none}
+#results .g{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px 2px}
+#results a{display:flex;align-items:center;gap:10px;padding:7px 12px;color:var(--text);text-decoration:none}
+#results a:hover,#results a.sel{background:var(--panel3)}
+#results a small{color:var(--muted);margin-left:auto}
+/* main */
+#main{min-height:0;min-width:0;overflow:hidden;padding:16px 18px}
+.page{height:100%;display:grid;gap:14px;min-height:0;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);display:flex;flex-direction:column;min-height:0;min-width:0}
+.card>.hd{padding:12px 16px 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card>.hd h3{margin:0;font-size:13.5px;font-weight:600}
+.card>.hd .sub{color:var(--muted);font-size:12px}
+.card>.hd .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.card>.bd{padding:0 16px 14px;overflow:auto;flex:1;min-height:0}
+.scroll{overflow:auto;min-height:0}
+/* controls */
+.seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg button{background:none;border:0;padding:5px 12px;border-radius:7px;cursor:pointer;color:var(--text2);font-weight:500;font-size:12.5px}
+.seg button[aria-pressed=true]{background:var(--panel3);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line2);padding:0 16px;overflow-x:auto;flex:none}
+.tabs button{background:none;border:0;padding:10px 12px;cursor:pointer;color:var(--text2);font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--accent)}
+input.f,select.f{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--text);font:inherit;font-size:12.5px;outline:none}
+input.f:focus,select.f:focus{border-color:var(--blue)}
+/* tiles */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);padding:12px 14px}
+.kpi .v{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.kpi .l{color:var(--muted);font-size:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.tile{background:var(--panel2);border-radius:10px;padding:9px 11px}
+.tile .v{font-size:17px;font-weight:700}
+.tile .l{color:var(--muted);font-size:11.5px;line-height:1.25}
+.tile.sm .v{font-size:13.5px;font-weight:600}
+.tile .v small{font-size:12px;color:var(--text2);font-weight:500}
+/* avatars */
+.av{border-radius:50%;object-fit:cover;flex:none;background:var(--panel3);display:grid;place-items:center;font-weight:700;color:#fff;overflow:hidden}
+.av.ini{background:linear-gradient(135deg,#3a3a37,#2a2a28);color:var(--text2)}
+.rk{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;font-size:12px;padding:0 6px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:2px 8px;border-radius:20px;background:var(--panel3);color:var(--text2);white-space:nowrap}
+.chip.ipl{background:#c9850026;color:#e7b04a}.chip.t20i{background:#199e7026;color:#4cc59a}.chip.oth{background:#9085e926;color:#b3abf0}
+.chip.top{background:#d5518126;color:#ec8db0}
+/* lists */
+.list{display:flex;flex-direction:column;gap:2px}
+.li{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:9px;cursor:pointer;min-width:0}
+.li:hover{background:var(--panel2)}
+.li.on{background:var(--panel3);box-shadow:inset 3px 0 0 var(--accent)}
+.li .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .meta{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .end{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.minibar{height:4px;border-radius:2px;background:var(--line);margin-top:4px;overflow:hidden}
+.minibar>i{display:block;height:100%;background:var(--blue);border-radius:2px}
+/* tables */
+table.t{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.t th{position:sticky;top:0;background:var(--panel);color:var(--muted);font-weight:600;text-align:right;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none;z-index:1}
+.t th.l,.t td.l{text-align:left}
+.t th[aria-sort=ascending]::after{content:" \25B2";font-size:9px}.t th[aria-sort=descending]::after{content:" \25BC";font-size:9px}
+.t td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line2);white-space:nowrap}
+.t tbody tr.click{cursor:pointer}
+.t tbody tr.click:hover td{background:var(--panel2)}
+.t tr.hl td{background:#d5518114}
+.t td .pn{display:flex;align-items:center;gap:8px}
+.more{display:block;margin:10px auto 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 14px;cursor:pointer;color:var(--text2)}
+.pos{color:#4cc59a}.neg{color:var(--red)}.mut{color:var(--muted)}
+/* hero */
+.hero{display:flex;gap:18px;align-items:center;padding:16px 18px;background:linear-gradient(120deg,#26131d 0%,#1a1a19 55%);border-bottom:1px solid var(--line2);border-radius:var(--r) var(--r) 0 0;flex:none}
+.hero h1{margin:0;font-size:26px;letter-spacing:-.4px;line-height:1.1}
+.hero h1 .n{color:var(--accent);margin-right:6px}
+.hero .tag{color:#ec8db0;font-weight:600;margin-top:4px}
+.hero .meta{color:var(--text2);font-size:12.5px;margin-top:3px}
+.prose{max-width:860px;font-size:13.5px;line-height:1.6;color:var(--text)}
+.prose p{margin:0 0 10px}
+.box{border-left:3px solid var(--blue);padding:4px 0 4px 14px;margin:6px 0 16px}
+.box.down{border-color:var(--red)}
+.box h4{margin:0 0 6px;font-size:13px;color:var(--blue)}.box.down h4{color:var(--red)}
+.box ul{margin:0;padding-left:18px}.box li{margin:3px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.sec{margin:14px 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin:4px 0 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+svg text{fill:var(--text2);font:12px Inter,system-ui,sans-serif}
+.chart{width:100%;min-width:0}
+svg .gl{stroke:var(--line2)}svg .ax{stroke:var(--line)}
+#tip{position:fixed;pointer-events:none;background:#000e;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12px;z-index:50;display:none;max-width:300px}
+#tip b{display:block;margin-bottom:2px}
+.empty{color:var(--muted);padding:30px;text-align:center}
+.fig{background:#fcfcfb;border-radius:10px;padding:6px;cursor:zoom-in}
+.fig img{width:100%;display:block;border-radius:6px}
+.figcap{color:var(--text2);font-size:12px;margin:6px 2px 0}
+#lightbox{position:fixed;inset:0;background:#000c;display:none;place-items:center;z-index:60;cursor:zoom-out;padding:3vw}
+#lightbox img{max-width:100%;max-height:100%;border-radius:8px;background:#fcfcfb}
+.formula{background:var(--panel2);border-radius:10px;padding:12px 14px;margin:0 0 12px}
+.formula .eq{font:14px/1.8 "Cambria Math","STIX Two Math",Georgia,serif;color:#fff;margin:4px 0}
+.formula h4{margin:0 0 4px;font-size:13.5px}.formula h4 span{color:var(--accent);margin-right:6px}
+.formula p{margin:6px 0 0;color:var(--text2);font-size:12.8px}
+.heat td{text-align:center;font-weight:600;min-width:46px}
+/* mobile */
+@media (max-width:980px){
+  body{grid-template-columns:1fr;overflow:auto;height:auto}
+  #side{position:fixed;inset:0 auto 0 0;width:240px;z-index:40;transform:translateX(-100%);transition:transform .2s}
+  body.navopen #side{transform:none;box-shadow:0 0 40px #000}
+  #burger{display:block}
+  #main{overflow:visible;padding:12px}
+  .page{height:auto;grid-template-columns:1fr!important;grid-template-rows:none!important}
+  .card{max-height:none}.card>.bd{overflow:visible}
+  .search{width:auto;flex:1}.search kbd{display:none}
+}
+</style>
+</head>
+<body>
+<aside id="side">
+  <div class="brand"><div class="logo">PL</div><div><b>Pressure Lab</b><small>SupeRR Selector S2</small></div></div>
+  <nav id="nav" aria-label="Main"></nav>
+  <div class="sidefoot" id="sidefoot"></div>
+</aside>
+<header id="top">
+  <button id="burger" aria-label="Open menu"><svg width="22" height="22" viewBox="0 0 24 24" stroke="#c3c2b7" stroke-width="2" fill="none"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+  <div id="crumb"></div>
+  <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" placeholder="Search players, teams, grounds…" autocomplete="off" aria-label="Search"><kbd>/</kbd>
+    <div id="results" role="listbox"></div></div>
+</header>
+<main id="main"></main>
+<div id="tip"></div>
+<div id="lightbox"><img alt=""></div>
+<script src="data.js"></script>
+<script>
+"use strict";
+const D = window.DATA;
+// ------------------------------------------------------------------ basics
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+function el(tag, a = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(a || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v; else if (k === "html") e.innerHTML = v; else if (k === "style") e.style.cssText = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return e;
+}
+const NS = "http://www.w3.org/2000/svg";
+function sv(tag, a = {}, text) { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) if (v != null) e.setAttribute(k, v); if (text != null) e.textContent = text; return e; }
+const isNum = (x) => typeof x === "number" && isFinite(x);
+const f = (x, d = 1) => isNum(x) ? x.toFixed(d) : "–";
+const f0 = (x) => isNum(x) ? Math.round(x).toLocaleString("en") : "–";
+const pct = (x, d = 0) => isNum(x) ? (100 * x).toFixed(d) + "%" : "–";
+const sgn = (x, d = 2) => isNum(x) ? (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(d) : "–";
+const ov = (b) => isNum(b) ? Math.floor(b / 6) + (b % 6 ? "." + (b % 6) : "") : "–";
+const dfmt = (s) => { if (!s) return "–"; const d = new Date(s + "T00:00:00"); return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); };
+const by = (arr, k) => { const m = new Map(); for (const r of arr) { const key = String(r[k]); if (!m.has(key)) m.set(key, []); m.get(key).push(r); } return m; };
+const idx = (arr, k) => new Map(arr.map((r) => [String(r[k]), r]));
+const CSS = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || v;
+const COL = { blue: "#3987e5", orange: "#d95926", aqua: "#199e70", yellow: "#c98500", magenta: "#d55181", green: "#0ca30c", violet: "#9085e9", red: "#e66767", gray: "#6d6c66", grid: "#2c2c2a", line: "#383835" };
+const compChip = (c) => el("span", { class: "chip " + (c === "IPL" ? "ipl" : c === "T20I" ? "t20i" : "oth") }, c || "–");
+
+// ------------------------------------------------------------------ indexes
+const NAME = D.names;
+const BAT = idx(D.bat, "pid"), BOWL = idx(D.bowl, "pid");
+const RB = idx(D.rbat, "pid"), RW = idx(D.rbowl, "pid");
+const PR = idx(D.pr, "pid");
+const NARR = D.narr || {}, PHOTO = D.photos || {};
+const G = {
+  batSeason: by(D.batSeason, "pid"), bowlSeason: by(D.bowlSeason, "pid"), batPhase: by(D.batPhase, "pid"), bowlPhase: by(D.bowlPhase, "pid"),
+  batVs: by(D.batVs, "pid"), bowlVs: by(D.bowlVs, "pid"), dism: by(D.dism, "pid"), wkHow: by(D.wkHow, "pid"),
+  batTeam: by(D.batTeam, "pid"), bowlTeam: by(D.bowlTeam, "pid"), batVenue: by(D.batVenue, "pid"), bowlVenue: by(D.bowlVenue, "pid"),
+  muBat: by(D.matchups, "bat"), muBowl: by(D.matchups, "bowl"), bestBat: by(D.bestBat, "pid"), bestBowl: by(D.bestBowl, "pid"),
+  svBat: by(D.seasonVal.bat, "pid"), svBowl: by(D.seasonVal.bowl, "pid"), bigBat: idx(D.bigBat, "pid"), bigBowl: idx(D.bigBowl, "pid"),
+  teamHist: by(D.teamHist, "team"), teamBat: by(D.teamBat, "tname"), teamBowl: by(D.teamBowl, "tname"),
+  venueBat: by(D.venueBat, "venue"), venueBowl: by(D.venueBowl, "venue"), h2h: by(D.h2h, "team"),
+};
+const MATCH = idx(D.matches, "id");
+const TEAMS = idx(D.teams, "team"), TNOW = idx(D.teamNow, "team"), VEN = idx(D.venues, "id");
+const TOP = { bat: D.rbat.filter((r) => r.final_rank <= 10).sort((a, b) => a.final_rank - b.final_rank),
+              bowl: D.rbowl.filter((r) => r.final_rank <= 10).sort((a, b) => a.final_rank - b.final_rank) };
+const R = { bat: D.rbat, bowl: D.rbowl };
+const COMPS = { bat: ["P", "A", "F", "S", "B", "D", "C", "M"], bowl: ["P", "R", "S", "B", "D", "C", "M"] };
+const CLAB = { P: "Pressure value", A: "Anchor credit", F: "Finisher rate", S: "Team share", B: "Big-match value", D: "Gap vs own normal", C: "Match consistency", M: "Experience", R: "Economy vs team-mates" };
+const CDESC = { P: "runs above an average player per ball, tense balls counted more", A: "dismissals avoided on pressure balls vs an average batter", F: "not out at the end of won pressure chases", S: "share of the team's pressure runs / wickets in the innings", B: "value in important matches (finals, knockouts, deciders)", D: "pressure level minus own normal level", C: "share of matches positive under pressure", M: "length of the pressure record (matches)", R: "runs per ball saved vs team-mates on pressure balls" };
+const W = { bat: { P: .25, A: .2, F: .1, S: .15, B: .1, D: .05, C: .05, M: .1 }, bowl: { P: .35, R: .15, S: .1, B: .1, D: .1, C: .1, M: .1 } };
+const compRank = {};
+for (const side of ["bat", "bowl"]) { compRank[side] = {}; for (const c of COMPS[side]) { const xs = R[side].map((r) => r[c]).sort((a, b) => b - a); compRank[side][c] = (v) => xs.findIndex((x) => x <= v) + 1; } }
+const pname = (pid) => NAME[String(pid)] || (BAT.get(String(pid)) || BOWL.get(String(pid)) || {}).name || "Player " + pid;
+const topOf = (pid) => { const a = RB.get(String(pid)), b = RW.get(String(pid)); return { bat: a && a.final_rank <= 10 ? a : null, bowl: b && b.final_rank <= 10 ? b : null }; };
+const PLAYERS = (() => {
+  const ids = new Set([...BAT.keys(), ...BOWL.keys()]);
+  return [...ids].map((id) => { const b = BAT.get(id), w = BOWL.get(id); return { pid: id, name: pname(id), team: (b || w).team, mat: Math.max(b ? b.mat : 0, w ? w.mat : 0), bat: !!b && b.balls >= 30, bowl: !!w && w.balls >= 60, runs: b ? b.runs : 0, wk: w ? w.wk : 0 }; })
+    .sort((a, b) => b.mat - a.mat);
+})();
+const TEAMNAMES = D.teams.map((t) => t.team).sort();
+
+// ------------------------------------------------------------------ ui bits
+function avatar(pid, size = 40) {
+  const p = PHOTO[String(pid)];
+  if (p) return el("img", { class: "av", src: p, alt: "", style: `width:${size}px;height:${size}px`, loading: "lazy" });
+  const n = pname(pid).split(" ").filter((x) => x[0] && x[0] === x[0].toUpperCase());
+  const ini = n.length > 1 ? n[0][0] + n[n.length - 1][0] : (n[0] || "?").slice(0, 2);
+  return el("div", { class: "av ini", style: `width:${size}px;height:${size}px;font-size:${Math.round(size * .36)}px` }, ini);
+}
+const tip = $("#tip");
+function showTip(e, html) { tip.innerHTML = html; tip.style.display = "block"; moveTip(e); }
+function moveTip(e) { const w = tip.offsetWidth, h = tip.offsetHeight; let x = e.clientX + 14, y = e.clientY + 14; if (x + w > innerWidth - 8) x = e.clientX - w - 14; if (y + h > innerHeight - 8) y = e.clientY - h - 14; tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px"; }
+function hideTip() { tip.style.display = "none"; }
+function tipOn(node, html) { node.addEventListener("mouseenter", (e) => showTip(e, typeof html === "function" ? html() : html)); node.addEventListener("mousemove", moveTip); node.addEventListener("mouseleave", hideTip); }
+function card(title, sub, body, opt = {}) {
+  const hd = el("div", { class: "hd" }, el("h3", {}, title), sub ? el("span", { class: "sub" }, sub) : null, opt.right ? el("div", { class: "right" }, opt.right) : null);
+  const bd = el("div", { class: "bd" + (opt.bdClass ? " " + opt.bdClass : "") }, body);
+  return el("div", { class: "card", style: opt.style || "" }, title ? hd : null, bd);
+}
+function seg(options, value, onChange) {
+  const s = el("div", { class: "seg", role: "group" });
+  for (const [v, lab] of options) s.append(el("button", { "aria-pressed": String(v === value), onclick: () => { $$("button", s).forEach((b) => b.setAttribute("aria-pressed", "false")); s.children[options.findIndex((o) => o[0] === v)].setAttribute("aria-pressed", "true"); onChange(v); } }, lab));
+  return s;
+}
+function tabs(list, current, onPick) {
+  const t = el("div", { class: "tabs", role: "tablist" });
+  for (const [k, lab] of list) t.append(el("button", { role: "tab", "aria-selected": String(k === current), onclick: () => onPick(k) }, lab));
+  return t;
+}
+function tile(v, l) { return el("div", { class: "tile" }, el("div", { class: "v", html: v }), el("div", { class: "l" }, l)); }
+function kpi(v, l) { return el("div", { class: "kpi" }, el("div", { class: "v" }, v), el("div", { class: "l" }, l)); }
+function sec(t) { return el("div", { class: "sec" }, t); }
+
+// table with sorting and "show more"
+function table(cols, rows, opt = {}) {
+  let sortK = opt.sort || null, dir = opt.dir || -1, shown = opt.page || 60;
+  const wrap = el("div");
+  function draw() {
+    const rs = [...rows];
+    if (sortK) { const c = cols.find((c) => c.k === sortK); const val = c.sv || ((r) => r[sortK]); rs.sort((a, b) => { const x = val(a), y = val(b); if (x == null || (typeof x === "number" && !isFinite(x))) return 1; if (y == null || (typeof y === "number" && !isFinite(y))) return -1; return (x > y ? 1 : x < y ? -1 : 0) * dir; }); }
+    const th = el("tr", {}, cols.map((c) => el("th", { class: c.l ? "l" : "", title: c.title || "", "aria-sort": c.k === sortK ? (dir > 0 ? "ascending" : "descending") : null,
+      onclick: () => { if (c.k === sortK) dir = -dir; else { sortK = c.k; dir = c.l ? 1 : -1; } draw(); } }, c.h)));
+    const tb = el("tbody");
+    for (const r of rs.slice(0, shown)) {
+      const tr = el("tr", { class: (opt.onRow ? "click" : "") + (opt.hl && opt.hl(r) ? " hl" : "") });
+      if (opt.onRow) tr.addEventListener("click", () => opt.onRow(r));
+      for (const c of cols) { const v = c.f ? c.f(r) : r[c.k]; tr.append(el("td", { class: c.l ? "l" : "" }, v == null ? "–" : v)); }
+      tb.append(tr);
+    }
+    wrap.replaceChildren(el("table", { class: "t" }, el("thead", {}, th), tb));
+    if (rs.length > shown) wrap.append(el("button", { class: "more", onclick: () => { shown += 100; draw(); } }, `Show more (${rs.length - shown} left)`));
+    if (!rs.length) wrap.append(el("div", { class: "empty" }, opt.empty || "Nothing to show"));
+  }
+  draw();
+  return wrap;
+}
+const pcell = (pid, size = 26) => el("span", { class: "pn" }, avatar(pid, size), el("span", {}, pname(pid)));
+
+// ------------------------------------------------------------------ charts (SVG)
+function svgEl(w, h) { return sv("svg", { viewBox: `0 0 ${w} ${h}`, width: w, height: h, style: "display:block;max-width:100%;height:auto" }); }
+const PENDING = [];
+function responsive(build) { const d = el("div", { class: "chart" }); PENDING.push([d, build]); requestAnimationFrame(flushCharts); return d; }
+function flushCharts() { while (PENDING.length) { const [d, build] = PENDING.shift(); const w = Math.max(280, Math.floor(d.clientWidth || 600)); d.replaceChildren(build(w)); } }
+function ticks(lo, hi, n = 5) { const span = hi - lo || 1, step0 = span / n, mag = 10 ** Math.floor(Math.log10(step0)); const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= step0); const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10)); return out; }
+// signed horizontal bars: items [{label, v, note, tip}]
+const signedBars = (items, opt = {}) => responsive((w) => _signedBars(items, { ...opt, w }));
+function _signedBars(items, opt = {}) {
+  const W0 = opt.w || 640, rowH = opt.rowH || 28, L = opt.labelW || 160, Rw = opt.noteW ?? 96, top = 8, h = top + items.length * rowH + 22;
+  const s = svgEl(W0, h);
+  const vals = items.map((d) => d.v), lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+  const pad = (hi - lo) * .05 || .1; const x0 = lo - (lo < 0 ? pad : 0), x1 = hi + pad;
+  const X = (v) => L + (v - x0) / (x1 - x0) * (W0 - L - Rw);
+  for (const t of ticks(x0, x1, 5)) { s.append(sv("line", { x1: X(t), x2: X(t), y1: top, y2: h - 20, class: "gl" })); s.append(sv("text", { x: X(t), y: h - 6, "text-anchor": "middle" }, opt.tf ? opt.tf(t) : String(t))); }
+  s.append(sv("line", { x1: X(0), x2: X(0), y1: top, y2: h - 20, stroke: "#8e8d86" }));
+  items.forEach((d, i) => {
+    const y = top + i * rowH + 5, bh = rowH - 10;
+    s.append(sv("text", { x: L - 10, y: y + bh / 2 + 4, "text-anchor": "end", style: "fill:#f0efec" }, d.label));
+    const a = X(Math.min(0, d.v)), b = X(Math.max(0, d.v));
+    const r = sv("rect", { x: a, y, width: Math.max(1, b - a), height: bh, rx: 3, fill: d.color || (d.v >= 0 ? COL.blue : COL.red) });
+    s.append(r); if (d.tip) tipOn(r, d.tip);
+    if (d.note) s.append(sv("text", { x: Math.max(X(d.v), X(0)) + 6, y: y + bh / 2 + 4 }, d.note));
+  });
+  if (opt.xlabel) s.append(sv("text", { x: (L + W0 - Rw) / 2, y: h + 10, "text-anchor": "middle" }, opt.xlabel));
+  return s;
+}
+// vertical bars: items [{x, v, color, label, tip}]
+const vbars = (items, opt = {}) => responsive((w) => _vbars(items, { ...opt, w: Math.min(w, opt.maxW || 760) }));
+function _vbars(items, opt = {}) {
+  const W0 = opt.w || 520, H = opt.h || 210, L = 44, B = 26, T = 18, Rm = 8;
+  const s = svgEl(W0, H);
+  const vals = items.map((d) => d.v).filter(isNum); let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals); if (opt.sym) { const m = Math.max(-lo, hi, opt.minAbs || 0); lo = -m; hi = m; }
+  if (hi === lo) hi = lo + 1;
+  const Y = (v) => T + (hi - v) / (hi - lo) * (H - T - B);
+  for (const t of ticks(lo, hi, 4)) { s.append(sv("line", { x1: L, x2: W0 - Rm, y1: Y(t), y2: Y(t), class: "gl" })); s.append(sv("text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end" }, opt.tf ? opt.tf(t) : String(t))); }
+  s.append(sv("line", { x1: L, x2: W0 - Rm, y1: Y(0), y2: Y(0), stroke: "#8e8d86" }));
+  const bw = (W0 - L - Rm) / items.length;
+  items.forEach((d, i) => {
+    const x = L + i * bw + bw * .2, w = bw * .6;
+    if (isNum(d.v)) { const r = sv("rect", { x, y: Math.min(Y(d.v), Y(0)), width: w, height: Math.max(1, Math.abs(Y(d.v) - Y(0))), rx: 3, fill: d.color || COL.blue }); s.append(r); if (d.tip) tipOn(r, d.tip);
+      if (d.label) s.append(sv("text", { x: x + w / 2, y: d.v >= 0 ? Y(d.v) - 5 : Y(d.v) + 13, "text-anchor": "middle" }, d.label)); }
+    s.append(sv("text", { x: x + w / 2, y: H - 8, "text-anchor": "middle", style: "fill:#f0efec" }, d.x));
+  });
+  if (opt.ylabel) s.append(sv("text", { x: 4, y: 11 }, opt.ylabel));
+  return s;
+}
+// stacked vertical bars: cats [{x, parts:[{k,v,color}]}]
+const stackBars = (cats, opt = {}) => responsive((w) => _stackBars(cats, { ...opt, w }));
+function _stackBars(cats, opt = {}) {
+  const W0 = opt.w || 520, H = opt.h || 200, L = 40, B = 24, T = 10, Rm = 8; const s = svgEl(W0, H);
+  const hi = Math.max(...cats.map((c) => c.parts.reduce((a, p) => a + p.v, 0))) * 1.08 || 1;
+  const Y = (v) => T + (hi - v) / hi * (H - T - B);
+  for (const t of ticks(0, hi, 4)) { s.append(sv("line", { x1: L, x2: W0 - Rm, y1: Y(t), y2: Y(t), class: "gl" })); s.append(sv("text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end" }, String(t))); }
+  const bw = (W0 - L - Rm) / cats.length;
+  cats.forEach((c, i) => { let acc = 0; const x = L + i * bw + bw * .22, w = bw * .56;
+    for (const p of c.parts) { if (!p.v) continue; const r = sv("rect", { x, y: Y(acc + p.v) + 1, width: w, height: Math.max(0, Y(acc) - Y(acc + p.v) - 2), rx: 3, fill: p.color }); tipOn(r, `<b>${c.x} · ${p.k}</b>${p.v} matches`); s.append(r); acc += p.v; }
+    s.append(sv("text", { x: x + w / 2, y: Y(acc) - 5, "text-anchor": "middle" }, String(acc)));
+    s.append(sv("text", { x: x + w / 2, y: H - 7, "text-anchor": "middle", style: "fill:#f0efec" }, c.x)); });
+  return s;
+}
+// line chart over dates: series [{name, color, pts:[{d, y, lo, hi}] }]
+const lineChart = (series, opt = {}) => responsive((w) => _lineChart(series, { ...opt, w }));
+function _lineChart(series, opt = {}) {
+  const W0 = opt.w || 760, H = opt.h || 280, L = 46, B = 28, T = 12, Rm = 14; const s = svgEl(W0, H);
+  const all = series.flatMap((x) => x.pts); if (!all.length) return el("div", { class: "empty" }, "No data");
+  const ts = all.map((p) => +new Date(p.d)); const t0 = Math.min(...ts), t1 = Math.max(...ts) || t0 + 1;
+  let lo = Math.min(...all.map((p) => isNum(p.lo) ? p.lo : p.y)), hi = Math.max(...all.map((p) => isNum(p.hi) ? p.hi : p.y)); const pd = (hi - lo) * .06 || 1; lo -= pd; hi += pd;
+  const X = (d) => L + (+new Date(d) - t0) / ((t1 - t0) || 1) * (W0 - L - Rm), Y = (v) => T + (hi - v) / (hi - lo) * (H - T - B);
+  for (const t of ticks(lo, hi, 5)) { s.append(sv("line", { x1: L, x2: W0 - Rm, y1: Y(t), y2: Y(t), class: "gl" })); s.append(sv("text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end" }, String(t))); }
+  for (let y = new Date(t0).getFullYear(); y <= new Date(t1).getFullYear() + 1; y++) { const x = X(`${y}-01-01`); if (x >= L && x <= W0 - Rm) { s.append(sv("line", { x1: x, x2: x, y1: T, y2: H - B, class: "gl" })); s.append(sv("text", { x, y: H - 9, "text-anchor": "middle" }, String(y))); } }
+  if (opt.zero && lo < 0 && hi > 0) s.append(sv("line", { x1: L, x2: W0 - Rm, y1: Y(0), y2: Y(0), stroke: "#8e8d86" }));
+  for (const sr of series) {
+    if (sr.pts.length && isNum(sr.pts[0].lo)) { const up = sr.pts.map((p) => `${X(p.d)},${Y(p.hi)}`), dn = [...sr.pts].reverse().map((p) => `${X(p.d)},${Y(p.lo)}`); s.append(sv("polygon", { points: [...up, ...dn].join(" "), fill: sr.color, opacity: .14 })); }
+    s.append(sv("polyline", { points: sr.pts.map((p) => `${X(p.d)},${Y(p.y)}`).join(" "), fill: "none", stroke: sr.color, "stroke-width": 2, "stroke-linejoin": "round" }));
+    const last = sr.pts[sr.pts.length - 1]; if (last && series.length > 1) s.append(sv("text", { x: Math.min(X(last.d) + 4, W0 - 60), y: Y(last.y) - 6, style: "fill:#f0efec" }, sr.name));
+  }
+  const cross = sv("line", { y1: T, y2: H - B, stroke: "#8e8d86", "stroke-dasharray": "3 3", opacity: 0 }); s.append(cross);
+  const hit = sv("rect", { x: L, y: T, width: W0 - L - Rm, height: H - T - B, fill: "transparent" }); s.append(hit);
+  hit.addEventListener("mousemove", (e) => {
+    const bb = s.getBoundingClientRect(); const xv = (e.clientX - bb.left) / bb.width * W0; const t = t0 + (xv - L) / (W0 - L - Rm) * (t1 - t0);
+    let html = ""; let xs = null;
+    for (const sr of series) { let best = null, bd = 1e18; for (const p of sr.pts) { const dd = Math.abs(+new Date(p.d) - t); if (dd < bd) { bd = dd; best = p; } } if (best) { xs = X(best.d); html += `<div><span style="color:${sr.color}">●</span> ${sr.name}: <b style="display:inline">${f(best.y, 1)}</b>${isNum(best.lo) ? ` <span class=mut>(±${f((best.hi - best.lo) / 2, 1)})</span>` : ""} <span class=mut>${dfmt(best.d)}</span></div>`; } }
+    cross.setAttribute("x1", xs); cross.setAttribute("x2", xs); cross.setAttribute("opacity", 1); showTip(e, html);
+  });
+  hit.addEventListener("mouseleave", () => { cross.setAttribute("opacity", 0); hideTip(); });
+  return s;
+}
+// rank intervals: rows [{label, lo, med, hi, p, hl, onclick}]
+const rangeChart = (rows) => responsive((w) => _rangeChart(rows, w));
+function _rangeChart(rows, w) {
+  const W0 = w || 640, rowH = 24, L = 200, Rm = 50, T = 6, H = T + rows.length * rowH + 26; const s = svgEl(W0, H);
+  const X = (v) => L + Math.log(Math.max(1, v)) / Math.log(80) * (W0 - L - Rm);
+  for (const t of [1, 2, 5, 10, 20, 50]) { s.append(sv("line", { x1: X(t), x2: X(t), y1: T, y2: H - 20, class: "gl" })); s.append(sv("text", { x: X(t), y: H - 6, "text-anchor": "middle" }, String(t))); }
+  s.append(sv("line", { x1: X(10.5), x2: X(10.5), y1: T, y2: H - 20, stroke: COL.magenta, "stroke-dasharray": "4 3" }));
+  rows.forEach((r, i) => { const y = T + i * rowH + rowH / 2; const c = r.hl ? COL.magenta : COL.blue;
+    const lab = sv("text", { x: L - 10, y: y + 4, "text-anchor": "end", style: `fill:${r.hl ? "#fff" : "#c3c2b7"};font-weight:${r.hl ? 700 : 400};cursor:pointer` }, r.label); if (r.onclick) lab.addEventListener("click", r.onclick); s.append(lab);
+    const ln = sv("line", { x1: X(r.lo), x2: X(r.hi), y1: y, y2: y, stroke: c, "stroke-width": r.hl ? 4 : 2.5, "stroke-linecap": "round" }); s.append(ln);
+    s.append(sv("circle", { cx: X(r.med), cy: y, r: 5, fill: c, stroke: "#1a1a19", "stroke-width": 2 }));
+    s.append(sv("text", { x: W0 - Rm + 8, y: y + 4 }, pct(r.p)));
+    tipOn(ln, `<b>${r.label}</b>rank ${r.lo}–${r.hi} (median ${r.med})<br>top 10 in ${pct(r.p)} of resamples`); });
+  return s;
+}
+
+// ------------------------------------------------------------------ navigation
+const NAV = [
+  ["", "Home", "Overview", '<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'],
+  ["top10", "Top 10", "Rankings", '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>'],
+  ["leaderboard", "Leaderboard", "Rankings", '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
+  ["player", "Players", "Explore", '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
+  ["h2h", "Head to head", "Explore", '<path d="M7 7h11l-3-3M17 17H6l3 3"/>'],
+  ["teams", "Teams", "Explore", '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>'],
+  ["grounds", "Grounds", "Explore", '<ellipse cx="12" cy="12" rx="9" ry="7"/><path d="M12 9v6"/>'],
+  ["matches", "Matches", "Explore", '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'],
+  ["method", "Method", "About", '<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'],
+];
+function buildNav() {
+  const nav = $("#nav"); let grp = "";
+  for (const [k, lab, g, icon] of NAV) { if (g !== grp) { nav.append(el("div", { class: "grp" }, g)); grp = g; }
+    const a = el("a", { href: "#/" + k, "data-k": k }); a.innerHTML = `<svg viewBox="0 0 24 24">${icon}</svg>`; a.append(lab); nav.append(a); }
+  $("#sidefoot").innerHTML = `${f0(D.meta.balls)} balls · ${D.meta.matches} matches<br>${dfmt(D.meta.from)} – ${dfmt(D.meta.to)}<br><span style="font-size:10.5px">Player photos: Times of India, Cricket Australia</span>`;
+}
+const go = (path) => { location.hash = "#/" + path; };
+function crumb(...parts) { $("#crumb").innerHTML = parts.map((p, i) => i < parts.length - 1 ? `<span>${p} /</span> ` : p).join(""); document.title = parts[parts.length - 1].replace(/<[^>]+>/g, "") + " · Pressure Lab"; }
+function page(cls, style) { const p = el("div", { class: "page " + (cls || ""), style: style || "" }); $("#main").replaceChildren(p); return p; }
+
+const ROUTES = { "": viewHome, top10: viewTop10, leaderboard: viewLeaderboard, player: viewPlayer, h2h: viewH2H, teams: viewTeams, grounds: viewGrounds, matches: viewMatches, method: viewMethod };
+function route() {
+  const parts = location.hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
+  const k = ROUTES[parts[0]] ? parts[0] : "";
+  $$("#nav a").forEach((a) => a.classList.toggle("on", a.dataset.k === k));
+  document.body.classList.remove("navopen"); hideTip();
+  try { ROUTES[k](...parts.slice(1)); flushCharts(); } catch (e) { console.error(e); page().append(el("div", { class: "empty" }, "Something went wrong: " + e.message)); }
+}
+
+// ------------------------------------------------------------------ search
+function setupSearch() {
+  const q = $("#q"), box = $("#results"); let sel = -1;
+  function run() {
+    const s = q.value.trim().toLowerCase(); if (s.length < 2) { box.style.display = "none"; return; }
+    const hit = (n) => n.toLowerCase().includes(s);
+    const pl = PLAYERS.filter((p) => hit(p.name)).slice(0, 8), tm = TEAMNAMES.filter(hit).slice(0, 5), gr = D.venues.filter((v) => hit(v.label) || hit(v.home || "")).slice(0, 4);
+    box.replaceChildren();
+    const add = (g, items, mk) => { if (!items.length) return; box.append(el("div", { class: "g" }, g)); items.forEach((x) => box.append(mk(x))); };
+    add("Players", pl, (p) => el("a", { href: "#/player/" + p.pid }, avatar(p.pid, 24), p.name, el("small", {}, p.team || "")));
+    add("Teams", tm, (t) => el("a", { href: "#/teams/" + encodeURIComponent(t) }, t, el("small", {}, (TEAMS.get(t) || {}).comp || "")));
+    add("Grounds", gr, (v) => el("a", { href: "#/grounds/" + v.id }, v.label, el("small", {}, v.home || "")));
+    if (!box.children.length) box.append(el("div", { class: "empty" }, "No match"));
+    box.style.display = "block"; sel = -1;
+  }
+  q.addEventListener("input", run); q.addEventListener("focus", run);
+  q.addEventListener("keydown", (e) => { const as = $$("a", box); if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); sel = Math.max(0, Math.min(as.length - 1, sel + (e.key === "ArrowDown" ? 1 : -1))); as.forEach((a, i) => a.classList.toggle("sel", i === sel)); }
+    if (e.key === "Enter" && as.length) { (as[sel] || as[0]).click(); } if (e.key === "Escape") { q.blur(); box.style.display = "none"; } });
+  box.addEventListener("click", (e) => { if (e.target.closest("a")) { box.style.display = "none"; q.value = ""; q.blur(); } });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".search")) box.style.display = "none"; });
+  document.addEventListener("keydown", (e) => { if (e.key === "/" && document.activeElement.tagName !== "INPUT") { e.preventDefault(); q.focus(); } });
+}
+
+// ================================================================== HOME
+function viewHome() {
+  crumb("Overview");
+  const p = page("", "grid-template-columns:1fr 1fr minmax(320px,.9fr);grid-template-rows:auto minmax(0,1fr) minmax(0,1fr)");
+  const k = el("div", { class: "kpis", style: "grid-column:1/-1" },
+    kpi(f0(D.meta.balls), "deliveries"), kpi(D.meta.matches, `matches · ${D.meta.ipl} IPL, ${D.meta.t20i} T20I`), kpi(f0(D.meta.players), "players"),
+    kpi(D.meta.teams, "teams"), kpi(D.meta.venues, "grounds"), kpi(`${D.rbat.length} / ${D.rbowl.length}`, "eligible batters / bowlers"));
+  p.append(k);
+  for (const side of ["bat", "bowl"]) {
+    const grid = el("div", { style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px" });
+    for (const r of TOP[side]) {
+      const c = el("div", { class: "li", style: "flex-direction:column;align-items:flex-start;background:var(--panel2);padding:8px 10px", onclick: () => go(`top10/${side}/${r.pid}`) },
+        el("div", { style: "display:flex;align-items:center;gap:10px;width:100%" }, avatar(r.pid, 44), el("div", { style: "min-width:0" }, el("span", { class: "rk" }, r.final_rank), el("div", { class: "nm", style: "margin-top:3px;white-space:normal;line-height:1.22;min-height:2.44em;font-size:13px" }, r.name))),
+        el("div", { style: "width:100%;margin-top:4px;display:flex;justify-content:space-between;font-size:12px;color:var(--text2)" }, el("span", {}, "Index " + f(r.index, 2)), el("span", {}, pct(r.p_top10) + " top-10")),
+        el("div", { class: "minibar", style: "width:100%" }, el("i", { style: `width:${Math.round(100 * r.p_top10)}%;background:${COL.magenta}` })));
+      tipOn(c, `<b>${r.name}</b>${(NARR[r.pid] || {}).tag || ""}`);
+      grid.append(c);
+    }
+    p.append(card(side === "bat" ? "Top 10 batters" : "Top 10 bowlers", "final ranking · click for details", grid, { style: "grid-row:2/4", right: el("a", { href: "#/top10/" + side }, "Open →") }));
+  }
+  // coverage
+  const seasons = D.meta.seasons; const cnt = {};
+  for (const m of D.matches) { cnt[m.season] = cnt[m.season] || { IPL: 0, T20I: 0, "Other T20": 0 }; cnt[m.season][m.comp] = (cnt[m.season][m.comp] || 0) + 1; }
+  const cov = el("div", {}, el("div", { class: "legend" }, el("span", {}, el("i", { style: `background:${COL.yellow}` }), "IPL"), el("span", {}, el("i", { style: `background:${COL.aqua}` }), "T20I"), el("span", {}, el("i", { style: `background:${COL.violet}` }), "Other T20")),
+    stackBars(seasons.map((s) => ({ x: s, parts: [{ k: "IPL", v: cnt[s].IPL, color: COL.yellow }, { k: "T20I", v: cnt[s].T20I, color: COL.aqua }, { k: "Other T20", v: cnt[s]["Other T20"] || 0, color: COL.violet }] })), { h: 230 }));
+  p.append(card("Matches by season", "", cov));
+  const big = D.matches.filter((m) => m.imp >= 0.6).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 25);
+  const lst = el("div", { class: "list" }, big.map((m) => el("div", { class: "li", onclick: () => go("matches/" + m.id) },
+    el("div", { style: "min-width:0" }, el("div", { class: "nm" }, `${m.bat1 || m.home} v ${m.bat2 || m.away}`), el("div", { class: "meta" }, `${dfmt(m.date)} · ${m.series}`)),
+    el("div", { class: "end" }, el("span", { class: "chip top" }, m.imp_why || "big match")))));
+  p.append(card("Recent big matches", "finals, knockouts, deciders", lst));
+}
+
+// ================================================================== TOP 10
+function viewTop10(side = "bat", pid, tab = "why") {
+  side = side === "bowl" ? "bowl" : "bat";
+  const list = TOP[side]; const cur = list.find((r) => String(r.pid) === String(pid)) || list[0];
+  crumb("Top 10", side === "bat" ? "Batters" : "Bowlers", cur.name);
+  const p = page("", "grid-template-columns:300px minmax(0,1fr)");
+  const L = el("div", { class: "list" });
+  const maxI = list[0].index;
+  for (const r of list) L.append(el("div", { class: "li" + (r === cur ? " on" : ""), onclick: () => go(`top10/${side}/${r.pid}/${tab}`) },
+    avatar(r.pid, 38), el("div", { style: "min-width:0;flex:1" }, el("div", { class: "nm" }, el("span", { style: "color:var(--accent);margin-right:6px" }, "#" + r.final_rank), r.name),
+      el("div", { class: "meta" }, r.role || ""), el("div", { class: "minibar" }, el("i", { style: `width:${Math.round(100 * r.index / maxI)}%` }))),
+    el("div", { class: "end" }, f(r.index, 2))));
+  p.append(card(null, null, el("div", {}, el("div", { style: "padding:12px 0 10px" }, seg([["bat", "Batters"], ["bowl", "Bowlers"]], side, (v) => go("top10/" + v))), L)));
+  // detail
+  const det = el("div", { class: "card" });
+  det.append(heroFor(cur, side));
+  det.append(statStrip(cur, side));
+  const body = el("div", { class: "bd", style: "padding-top:14px" });
+  const TABS = [["why", "Why in the top 10"], ["breakdown", "Rating breakdown"], ["seasons", "Seasons"], ["moments", "Best moments"], ["certainty", "How certain"]];
+  det.append(tabs(TABS, tab, (t) => go(`top10/${side}/${cur.pid}/${t}`)));
+  det.append(body);
+  p.append(det);
+  ({ why: tWhy, breakdown: tBreak, seasons: tSeasons, moments: tMoments, certainty: tCert }[tab] || tWhy)(body, cur, side);
+}
+function heroFor(r, side) {
+  const b = (side === "bat" ? BAT : BOWL).get(String(r.pid)) || {};
+  const n = NARR[r.pid] || {};
+  const role = side === "bat" ? `${r.role} batter · usual position ${f(r.usual_position, 0)}` : `${r.type} bowler · mostly ${r.role}`;
+  return el("div", { class: "hero" }, avatar(r.pid, 92),
+    el("div", { style: "min-width:0" }, el("h1", {}, el("span", { class: "n" }, "#" + r.final_rank), r.name),
+      n.tag ? el("div", { class: "tag" }, n.tag) : null,
+      el("div", { class: "meta" }, `${role} · ${r.matches} matches · ${r.competitions} · latest team ${b.team || "–"}`),
+      el("div", { style: "margin-top:8px;display:flex;gap:8px;flex-wrap:wrap" }, el("a", { class: "chip", href: "#/player/" + r.pid }, "Full player profile →"), b.team ? el("a", { class: "chip", href: "#/teams/" + encodeURIComponent(b.team) }, b.team) : null)));
+}
+function statStrip(r, side) {
+  const t = side === "bat" ? [
+    [f(r.index, 2), "Reliability Index"], [pct(r.p_top10), "top 10 in resamples"], [`${f(r.rank_p05, 0)}–${f(r.rank_p95, 0)}`, "rank range (5–95%)"], [f0(r.press_balls), "pressure balls"],
+    [`${f(r.press_SR, 0)} <small>/ ${f(r.norm_SR, 0)}</small>`, "strike rate pressure / normal"], [`${f(r.press_avg, 1)} <small>/ ${f(r.norm_avg, 1)}</small>`, "average pressure / normal"], [`${f0(r.fin)} <small>of ${f0(r.chase_p)}</small>`, "pressure chases finished"]]
+    : [[f(r.index, 2), "Reliability Index"], [pct(r.p_top10), "top 10 in resamples"], [`${f(r.rank_p05, 0)}–${f(r.rank_p95, 0)}`, "rank range (5–95%)"], [f0(r.press_balls), "pressure balls"],
+      [`${f(r.press_econ, 2)} <small>/ ${f(r.norm_econ, 2)}</small>`, "economy pressure / normal"], [`${f(r.press_balls_per_wkt, 1)} <small>/ ${f(r.norm_balls_per_wkt, 1)}</small>`, "balls per wicket p / n"], [`${f(r.press_dot_pct, 0)}% <small>/ ${f(r.norm_dot_pct, 0)}%</small>`, "dot balls p / n"]];
+  return el("div", { class: "tiles", style: "padding:12px 16px 4px;flex:none" }, t.map(([v, l]) => tile(v, l)));
+}
+function tWhy(body, r, side) {
+  const n = NARR[r.pid];
+  if (!n) { body.append(el("div", { class: "empty" }, "No write-up")); return; }
+  const wrap = el("div", { class: "prose" });
+  wrap.append(el("div", { class: "box" }, el("h4", {}, "Why in the top 10"), el("p", { html: n.why })));
+  wrap.append(el("div", { class: "box down" }, el("h4", {}, "Downsides and uncertainty"), el("ul", {}, n.down.map((d) => el("li", { html: d })))));
+  body.append(el("div", { class: "grid2", style: "align-items:start" }, wrap, el("div", {}, sec("Contribution to the index"), contribChart(r, side), el("div", { class: "mut", style: "font-size:12px" }, "weight × z-score; #k = rank among all eligible " + (side === "bat" ? "batters" : "bowlers")))));
+}
+function contribChart(r, side) {
+  const n = R[side].length;
+  return signedBars(COMPS[side].map((c) => ({ label: CLAB[c], v: r["contrib_" + c], note: `#${compRank[side][c](r[c])} of ${n}`,
+    tip: `<b>${CLAB[c]}</b>${CDESC[c]}<br>value ${f(r[c], 3)} · weight ${W[side][c]} · contribution ${sgn(r["contrib_" + c])}` })), { tf: (t) => f(t, 1) });
+}
+function tBreak(body, r, side) {
+  body.append(el("div", { class: "tiles", style: "margin-bottom:14px" },
+    tile(f(r.index_full, 3), "index on all matches"), tile(f(r.index_lbo, 3), "index without best match"), tile(sgn(r.season_bonus, 3), `season bonus (${r.seasons_pos}/${r.seasons_q} positive seasons)`),
+    tile(f(r.index, 3), "final = ½·all + ½·without best + bonus"), tile(`#${r.rank_full} → #${r.final_rank}`, "rank on all matches → final")));
+  const n = R[side].length;
+  const rows = COMPS[side].map((c) => ({ c, lab: CLAB[c], desc: CDESC[c], w: W[side][c], v: r[c], rk: compRank[side][c](r[c]), z: r["contrib_" + c] / W[side][c], con: r["contrib_" + c] }));
+  body.append(el("div", { class: "grid2", style: "align-items:start" },
+    el("div", {}, sec("Contribution (weight × z-score)"), contribChart(r, side)),
+    el("div", {}, sec("Components"), table([{ k: "lab", h: "Component", l: 1 }, { k: "w", h: "Weight" }, { k: "v", h: "Value", f: (x) => f(x.v, 3) }, { k: "z", h: "z", f: (x) => sgn(x.z) }, { k: "rk", h: "Rank", f: (x) => `${x.rk} / ${n}` }], rows, { sort: "w" }),
+      el("div", { class: "mut", style: "font-size:12px;margin-top:8px" }, COMPS[side].map((c) => `${CLAB[c]}: ${CDESC[c]}.`).join(" ")))));
+}
+function seasonData(pid, side) {
+  const sv0 = ((side === "bat" ? G.svBat : G.svBowl).get(String(pid)) || []).filter((x) => x.pb > 0);
+  return sv0.map((x) => ({ x: x.season, v: x.vpb, color: x.pb < 25 ? "#4a4a46" : x.vpb >= 0 ? COL.blue : COL.red, label: `${x.pb} b`,
+    tip: `<b>${x.season}</b>${f(x.vpb, 3)} runs per pressure ball<br>${x.pb} pressure balls${x.pb < 25 ? " (too few to count)" : ""}` }));
+}
+function tSeasons(body, r, side) {
+  body.append(el("div", { class: "grid2", style: "align-items:start" },
+    el("div", {}, sec("Value per pressure ball, by season"), vbars(seasonData(r.pid, side), { sym: true, minAbs: .3, tf: (t) => f(t, 1) }),
+      el("div", { class: "mut", style: "font-size:12px" }, "Blue = positive, red = negative; grey = fewer than 25 pressure balls (not counted for the season bonus).")),
+    el("div", {}, sec("Season record"), seasonTable(r.pid, side))));
+}
+function seasonTable(pid, side) {
+  const rows = ((side === "bat" ? G.batSeason : G.bowlSeason).get(String(pid)) || []);
+  return side === "bat" ? table([{ k: "season", h: "Season", l: 1 }, { k: "comp", h: "Comp", l: 1, f: (x) => compChip(x.comp) }, { k: "mat", h: "M" }, { k: "runs", h: "Runs", f: (x) => f0(x.runs) }, { k: "avg", h: "Avg", f: (x) => f(x.avg, 1) }, { k: "sr", h: "SR", f: (x) => f(x.sr, 1) }, { k: "hs", h: "HS", f: (x) => f0(x.hs) }, { k: "p_runs", h: "P.runs", f: (x) => `${f0(x.p_runs)} (${f0(x.p_balls)})` }, { k: "p_sr", h: "P.SR", sv: (x) => x.p_balls ? x.p_runs / x.p_balls : null, f: (x) => x.p_balls ? f(100 * x.p_runs / x.p_balls, 0) : "–" }], rows, { sort: "season", dir: 1 })
+    : table([{ k: "season", h: "Season", l: 1 }, { k: "comp", h: "Comp", l: 1, f: (x) => compChip(x.comp) }, { k: "mat", h: "M" }, { k: "wk", h: "Wkts" }, { k: "econ", h: "Econ", f: (x) => f(x.econ, 2) }, { k: "avg", h: "Avg", f: (x) => f(x.avg, 1) }, { k: "best", h: "Best" }, { k: "p_wk", h: "P.wkts", f: (x) => f0(x.p_wk) }, { k: "p_econ", h: "P.econ", sv: (x) => x.p_balls ? x.p_runs / x.p_balls : null, f: (x) => x.p_balls ? f(6 * x.p_runs / x.p_balls, 2) : "–" }], rows, { sort: "season", dir: 1 });
+}
+function momentsTable(pid, side, n = 12) {
+  const rows = [...((side === "bat" ? G.bestBat : G.bestBowl).get(String(pid)) || [])].sort((a, b) => b.p_val - a.p_val).slice(0, n);
+  const res = (x) => el("span", { class: x.res === "W" ? "pos" : x.res === "L" ? "neg" : "mut" }, x.res === "W" ? "won" : x.res === "L" ? "lost" : "n/r");
+  const occ = (x) => x.imp_why ? el("span", { class: "chip top" }, x.imp_why) : x.stage && x.stage !== "League" && x.stage !== "Others" ? x.stage : "–";
+  const cols = side === "bat" ? [{ k: "date", h: "Date", l: 1, f: (x) => dfmt(x.date) }, { k: "series", h: "Series", l: 1 }, { k: "opp_n", h: "Opponent", l: 1 }, { k: "imp", h: "Occasion", l: 1, f: occ },
+    { k: "runs", h: "Runs (balls)", f: (x) => el("b", {}, `${x.runs}${x.out ? "" : "*"} (${x.balls})`) }, { k: "p_runs", h: "On pressure balls", f: (x) => `${x.p_runs} off ${x.p_balls}` }, { k: "p_val", h: "Pressure value", f: (x) => sgn(x.p_val, 1) }, { k: "is_mom", h: "PoM", f: (x) => x.is_mom ? "★" : "" }, { k: "res", h: "Result", f: res }]
+    : [{ k: "date", h: "Date", l: 1, f: (x) => dfmt(x.date) }, { k: "series", h: "Series", l: 1 }, { k: "opp_n", h: "Opponent", l: 1 }, { k: "imp", h: "Occasion", l: 1, f: occ },
+      { k: "wk", h: "Figures", f: (x) => el("b", {}, `${x.wk}/${x.runs} (${ov(x.balls)} ov)`) }, { k: "p_wk", h: "On pressure balls", f: (x) => `${x.p_wk} wkt, ${x.p_runs} r / ${x.p_balls} b` }, { k: "p_val", h: "Pressure value", f: (x) => sgn(x.p_val, 1) }, { k: "is_mom", h: "PoM", f: (x) => x.is_mom ? "★" : "" }, { k: "res", h: "Result", f: res }];
+  return table(cols, rows, { sort: "p_val", onRow: (x) => go("matches/" + x.match_id) });
+}
+function tMoments(body, r, side) { body.append(sec("Best pressure moments — ranked by value added on pressure balls (click a row for the match)"), momentsTable(r.pid, side)); }
+function tCert(body, r, side) {
+  const rows = R[side].slice().sort((a, b) => a.final_rank - b.final_rank).slice(0, 20).map((x) => ({ label: `${x.final_rank}. ${x.name}`, lo: x.rank_p05, med: x.rank_med, hi: x.rank_p95, p: x.p_top10, hl: x.pid === r.pid, onclick: () => x.final_rank <= 10 ? go(`top10/${side}/${x.pid}/certainty`) : go("player/" + x.pid) }));
+  body.append(el("div", { class: "grid2", style: "align-items:start;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr)" },
+    el("div", {}, sec("Rank over 500 match resamples (dot = median, bar = 5–95%) · dashed line = top-10 cut"), rangeChart(rows)),
+    el("div", { class: "prose" }, sec("Reading this"), el("p", {}, `${r.name} finishes in the top 10 in ${pct(r.p_top10)} of resamples, with a median rank of ${f(r.rank_med, 0)} and a 90% range of ${f(r.rank_p05, 0)}–${f(r.rank_p95, 0)}.`),
+      el("p", { class: "mut" }, "Each resample redraws the matches with replacement and reruns the full rating. Only the top three to five of each list are firm; below that, places are close to those just outside the top 10."),
+      r.tie_zone ? el("p", {}, "This player was in the tie zone (index within 0.02 of 10th place), so the place was decided by the top-10 share.") : null)));
+}
+
+// ================================================================== LEADERBOARD
+function viewLeaderboard(side = "bat") {
+  side = side === "bowl" ? "bowl" : "bat";
+  crumb("Leaderboard", side === "bat" ? "Batters" : "Bowlers");
+  const p = page("", "grid-template-columns:minmax(0,1fr)");
+  let q = "", role = "";
+  const holder = el("div");
+  const roles = [...new Set(R[side].map((r) => r.role))].filter(Boolean).sort();
+  const draw = () => {
+    const rows = R[side].filter((r) => (!q || r.name.toLowerCase().includes(q)) && (!role || r.role === role));
+    const comp = COMPS[side].map((c) => ({ k: c, h: c, title: CLAB[c], f: (x) => f(x[c], 3) }));
+    const cols = [{ k: "final_rank", h: "#", f: (x) => x.final_rank <= 10 ? el("span", { class: "rk" }, x.final_rank) : x.final_rank }, { k: "name", h: "Player", l: 1, f: (x) => pcell(x.pid) }, { k: "role", h: "Role", l: 1 }, { k: "matches", h: "M" },
+      { k: "index", h: "Index", f: (x) => el("b", {}, f(x.index, 3)) }, ...comp, { k: "rank_p05", h: "Range", f: (x) => `${f(x.rank_p05, 0)}–${f(x.rank_p95, 0)}` }, { k: "p_top10", h: "Top-10", f: (x) => pct(x.p_top10) }, { k: "press_balls", h: "P.balls" },
+      ...(side === "bat" ? [{ k: "press_SR", h: "P.SR", f: (x) => f(x.press_SR, 0) }, { k: "press_avg", h: "P.Avg", f: (x) => f(x.press_avg, 1) }] : [{ k: "press_econ", h: "P.Econ", f: (x) => f(x.press_econ, 2) }, { k: "press_balls_per_wkt", h: "B/wkt", f: (x) => f(x.press_balls_per_wkt, 1) }])];
+    holder.replaceChildren(table(cols, rows, { sort: "final_rank", dir: 1, page: 150, hl: (x) => x.final_rank <= 10, onRow: (x) => x.final_rank <= 10 ? go(`top10/${side}/${x.pid}`) : go("player/" + x.pid) }));
+  };
+  const ctrl = [seg([["bat", "Batters"], ["bowl", "Bowlers"]], side, (v) => go("leaderboard/" + v)),
+    el("input", { class: "f", placeholder: "Filter by name", oninput: (e) => { q = e.target.value.toLowerCase(); draw(); } }),
+    el("select", { class: "f", onchange: (e) => { role = e.target.value; draw(); } }, el("option", { value: "" }, "All roles"), roles.map((r) => el("option", { value: r }, r)))];
+  draw();
+  p.append(card(`All eligible ${side === "bat" ? "batters" : "bowlers"} (${R[side].length})`, "Reliability Index and its components · hover a column name for its meaning", holder, { right: ctrl }));
+}
+
+// ================================================================== PLAYERS
+let PLF = { q: "", role: "all" };
+function viewPlayer(pid, tab = "overview") {
+  if (!pid) pid = TOP.bat[0].pid;
+  const id = String(pid);
+  crumb("Players", pname(id));
+  const p = page("", "grid-template-columns:290px minmax(0,1fr)");
+  // list
+  const listBox = el("div", { class: "list" });
+  const drawList = () => {
+    const rows = PLAYERS.filter((x) => (!PLF.q || x.name.toLowerCase().includes(PLF.q)) && (PLF.role === "all" || x[PLF.role])).slice(0, 250);
+    listBox.replaceChildren(...rows.map((x) => el("div", { class: "li" + (x.pid === id ? " on" : ""), onclick: () => go("player/" + x.pid) }, avatar(x.pid, 30),
+      el("div", { style: "min-width:0" }, el("div", { class: "nm" }, x.name), el("div", { class: "meta" }, x.team || "")), el("div", { class: "end mut", style: "font-size:11.5px" }, x.mat + " m"))));
+    if (!rows.length) listBox.append(el("div", { class: "empty" }, "No players"));
+  };
+  const left = el("div", { class: "card" }, el("div", { class: "hd", style: "flex-direction:column;align-items:stretch" },
+    el("input", { class: "f", placeholder: "Find a player", value: PLF.q, oninput: (e) => { PLF.q = e.target.value.toLowerCase(); drawList(); } }),
+    seg([["all", "All"], ["bat", "Batters"], ["bowl", "Bowlers"]], PLF.role, (v) => { PLF.role = v; drawList(); })), el("div", { class: "bd" }, listBox));
+  drawList();
+  p.append(left);
+  // profile
+  const b = BAT.get(id), w = BOWL.get(id), rb = RB.get(id), rw = RW.get(id), tp = topOf(id);
+  const det = el("div", { class: "card" });
+  const chips = el("div", { style: "margin-top:8px;display:flex;gap:8px;flex-wrap:wrap" });
+  if (tp.bat) chips.append(el("a", { class: "chip top", href: `#/top10/bat/${id}` }, `Top-10 batter #${tp.bat.final_rank}`));
+  if (tp.bowl) chips.append(el("a", { class: "chip top", href: `#/top10/bowl/${id}` }, `Top-10 bowler #${tp.bowl.final_rank}`));
+  if (rb && !tp.bat) chips.append(el("span", { class: "chip" }, `Batting rank #${rb.final_rank} of ${D.rbat.length}`));
+  if (rw && !tp.bowl) chips.append(el("span", { class: "chip" }, `Bowling rank #${rw.final_rank} of ${D.rbowl.length}`));
+  const team = (b || w || {}).team;
+  if (team) chips.append(el("a", { class: "chip", href: "#/teams/" + encodeURIComponent(team) }, team));
+  const sub = [b ? `${b.hand || ""} bat`.trim() : null, w ? `${w.kind || w.type || ""} bowler` : null, b ? `${b.ipl_inn} IPL / ${b.t20i_inn} T20I innings` : null].filter(Boolean).join(" · ");
+  det.append(el("div", { class: "hero" }, avatar(id, 84), el("div", { style: "min-width:0" }, el("h1", {}, pname(id)), el("div", { class: "meta" }, sub), chips)));
+  const TABS = [["overview", "Overview"], ["seasons", "Seasons"], ["phases", "Phases & types"], ["opponents", "Opponents"], ["grounds", "Grounds"], ["matchups", "Match-ups"], ["moments", "Best moments"], ["rating", "Rating"]];
+  det.append(tabs(TABS, tab, (t) => go(`player/${id}/${t}`)));
+  const body = el("div", { class: "bd", style: "padding-top:14px" }); det.append(body); p.append(det);
+  const both = (fb, fw) => { const g = el("div", { class: "grid2", style: "align-items:start" }); if (b) g.append(el("div", {}, sec("Batting"), fb())); if (w) g.append(el("div", {}, sec("Bowling"), fw())); return g; };
+  const T = {
+    overview: () => {
+      if (b) { body.append(sec("Batting"), el("div", { class: "tiles" }, tile(b.mat, "matches"), tile(f0(b.runs), "runs"), tile(f(b.avg, 1), "average"), tile(f(b.sr, 1), "strike rate"), tile(f0(b.hs), "highest"), tile(`${f0(b.f50)} / ${f0(b.h100)}`, "50s / 100s"), tile(`${f0(b.fours)} / ${f0(b.sixes)}`, "4s / 6s")));
+        body.append(el("div", { style: "margin-top:10px" }, pvn([["Balls", b.p_balls, b.n_balls, f0], ["Runs", b.p_runs, b.n_runs, f0], ["Dismissals", b.p_outs, b.n_outs, f0], ["Strike rate", b.p_sr, b.n_sr, (x) => f(x, 1), 1], ["Average", b.p_avg, b.n_avg, (x) => f(x, 1), 1]]))); }
+      if (w) { body.append(sec("Bowling"), el("div", { class: "tiles" }, tile(w.mat, "matches"), tile(f0(w.wk), "wickets"), tile(f(w.econ, 2), "economy"), tile(f(w.avg, 1), "average"), tile(f(w.bsr, 1), "balls / wicket"), tile(w.best, "best"), tile(f(w.dot_pct, 0) + "%", "dot balls")));
+        body.append(el("div", { style: "margin-top:10px" }, pvn([["Balls", w.p_balls, w.n_balls, f0], ["Runs", w.p_runs, w.n_runs, f0], ["Wickets", w.p_wk, w.n_wk, f0], ["Economy", w.p_econ, w.n_econ, (x) => f(x, 2), -1], ["Balls / wicket", w.p_bsr, w.n_bsr, (x) => f(x, 1), -1], ["Dot %", w.p_dot, w.n_dot, (x) => f(x, 1), 1]]))); }
+      for (const [sd, rr] of [["bat", tp.bat], ["bowl", tp.bowl]]) if (rr && NARR[id]) body.append(sec(`Why a top-10 ${sd === "bat" ? "batter" : "bowler"}`), el("div", { class: "prose" }, el("p", { html: NARR[id].why }), el("a", { href: `#/top10/${sd}/${id}` }, "Open the top-10 page →")));
+    },
+    seasons: () => body.append(both(() => el("div", {}, rb ? vbars(seasonData(id, "bat"), { sym: true, minAbs: .3, tf: (t) => f(t, 1), h: 170 }) : null, seasonTable(id, "bat")), () => el("div", {}, rw ? vbars(seasonData(id, "bowl"), { sym: true, minAbs: .3, tf: (t) => f(t, 1), h: 170 }) : null, seasonTable(id, "bowl")))),
+    phases: () => body.append(both(() => el("div", {},
+      table([{ k: "phase", h: "Phase", l: 1 }, { k: "runs", h: "Runs" }, { k: "balls", h: "Balls" }, { k: "outs", h: "Outs" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 1) }, { k: "avg", h: "Avg", sv: (x) => x.runs / Math.max(1, x.outs), f: (x) => f(x.runs / Math.max(1, x.outs), 1) }], G.batPhase.get(id) || []),
+      sec("Against pace and spin"), table([{ k: "vs", h: "Bowling", l: 1 }, { k: "runs", h: "Runs" }, { k: "balls", h: "Balls" }, { k: "outs", h: "Outs" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 1) }, { k: "avg", h: "Avg", sv: (x) => x.runs / Math.max(1, x.outs), f: (x) => f(x.runs / Math.max(1, x.outs), 1) }], G.batVs.get(id) || []),
+      sec("How out"), table([{ k: "how", h: "Dismissal", l: 1 }, { k: "n", h: "Times" }], G.dism.get(id) || [], { sort: "n" })),
+    () => el("div", {}, table([{ k: "phase", h: "Phase", l: 1 }, { k: "balls", h: "Balls" }, { k: "runs", h: "Runs" }, { k: "wk", h: "Wkts" }, { k: "econ", h: "Econ", sv: (x) => x.runs / x.balls, f: (x) => f(6 * x.runs / x.balls, 2) }], G.bowlPhase.get(id) || []),
+      sec("Against left / right-handers"), table([{ k: "vs", h: "Batter", l: 1 }, { k: "balls", h: "Balls" }, { k: "runs", h: "Runs" }, { k: "wk", h: "Wkts" }, { k: "econ", h: "Econ", sv: (x) => x.runs / x.balls, f: (x) => f(6 * x.runs / x.balls, 2) }], G.bowlVs.get(id) || []),
+      sec("How wickets came"), table([{ k: "how", h: "Mode", l: 1 }, { k: "n", h: "Wkts" }], G.wkHow.get(id) || [], { sort: "n" })))),
+    opponents: () => body.append(both(() => table([{ k: "opp", h: "Opponent", l: 1, sv: (x) => D.teamname[x.opp], f: (x) => el("a", { href: "#/teams/" + encodeURIComponent(D.teamname[x.opp]) }, D.teamname[x.opp]) }, { k: "inn", h: "Inn" }, { k: "runs", h: "Runs" }, { k: "balls", h: "Balls" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 1) }, { k: "avg", h: "Avg", sv: (x) => x.runs / Math.max(1, x.outs), f: (x) => f(x.runs / Math.max(1, x.outs), 1) }, { k: "hs", h: "HS" }], G.batTeam.get(id) || [], { sort: "runs" }),
+      () => table([{ k: "opp", h: "Opponent", l: 1, sv: (x) => D.teamname[x.opp], f: (x) => el("a", { href: "#/teams/" + encodeURIComponent(D.teamname[x.opp]) }, D.teamname[x.opp]) }, { k: "inn", h: "Inn" }, { k: "wk", h: "Wkts" }, { k: "runs", h: "Runs" }, { k: "econ", h: "Econ", sv: (x) => x.runs / x.balls, f: (x) => f(6 * x.runs / x.balls, 2) }], G.bowlTeam.get(id) || [], { sort: "wk" }))),
+    grounds: () => body.append(both(() => table([{ k: "venue", h: "Ground", l: 1, sv: (x) => D.venueLabel[x.venue], f: (x) => el("a", { href: "#/grounds/" + x.venue }, D.venueLabel[x.venue] || x.venue) }, { k: "inn", h: "Inn" }, { k: "runs", h: "Runs" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 1) }, { k: "avg", h: "Avg", sv: (x) => x.runs / Math.max(1, x.outs), f: (x) => f(x.runs / Math.max(1, x.outs), 1) }, { k: "hs", h: "HS" }], G.batVenue.get(id) || [], { sort: "runs" }),
+      () => table([{ k: "venue", h: "Ground", l: 1, sv: (x) => D.venueLabel[x.venue], f: (x) => el("a", { href: "#/grounds/" + x.venue }, D.venueLabel[x.venue] || x.venue) }, { k: "inn", h: "Inn" }, { k: "wk", h: "Wkts" }, { k: "econ", h: "Econ", sv: (x) => x.runs / x.balls, f: (x) => f(6 * x.runs / x.balls, 2) }], G.bowlVenue.get(id) || [], { sort: "wk" }))),
+    matchups: () => body.append(both(() => el("div", {}, el("div", { class: "mut", style: "font-size:12px;margin-bottom:6px" }, "Bowlers faced (at least 6 balls). Click for head to head."),
+      table([{ k: "bowl", h: "Bowler", l: 1, sv: (x) => pname(x.bowl), f: (x) => pname(x.bowl) }, { k: "balls", h: "Balls" }, { k: "runs", h: "Runs" }, { k: "outs", h: "Outs" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 0) }, { k: "dots", h: "Dots" }, { k: "p_balls", h: "P.balls" }], G.muBat.get(id) || [], { sort: "balls", onRow: (x) => go(`h2h/pair/${x.bat}/${x.bowl}`) })),
+      () => el("div", {}, el("div", { class: "mut", style: "font-size:12px;margin-bottom:6px" }, "Batters bowled to (at least 6 balls). Click for head to head."),
+        table([{ k: "bat", h: "Batter", l: 1, sv: (x) => pname(x.bat), f: (x) => pname(x.bat) }, { k: "balls", h: "Balls" }, { k: "runs", h: "Runs" }, { k: "outs", h: "Wkts" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 0) }, { k: "dots", h: "Dots" }], G.muBowl.get(id) || [], { sort: "balls", onRow: (x) => go(`h2h/pair/${x.bat}/${x.bowl}`) })))),
+    moments: () => { if (b) body.append(sec("Best batting moments"), momentsTable(id, "bat")); if (w) body.append(sec("Best bowling moments"), momentsTable(id, "bowl")); },
+    rating: () => {
+      for (const [sd, rr] of [["bat", rb], ["bowl", rw]]) {
+        if (!(sd === "bat" ? b : w)) continue;
+        body.append(sec(sd === "bat" ? "Batting rating" : "Bowling rating"));
+        if (!rr) { body.append(el("div", { class: "mut" }, "Not eligible: needs at least 100 pressure balls in at least 10 matches, and a match in 2025 or 2026.")); continue; }
+        body.append(el("div", { class: "tiles", style: "margin-bottom:10px" }, tile("#" + rr.final_rank, `final rank of ${R[sd].length}`), tile(f(rr.index, 3), "Reliability Index"), tile(pct(rr.p_top10), "top 10 in resamples"), tile(`${f(rr.rank_p05, 0)}–${f(rr.rank_p95, 0)}`, "rank range")), contribChart(rr, sd));
+      }
+      const q = PR.get(id);
+      if (q) body.append(sec("Opponent-adjusted rating (separate analysis, not used in the ranking)"), el("div", { class: "tiles" },
+        q.bat_balls ? tile(sgn(q.bat_rating, 1), `batting, runs per 100 balls vs average${isNum(q.bat_rank) ? ` · #${f(q.bat_rank, 0)} of ${q.bat_n_ranked}` : ""}`) : null,
+        q.bowl_balls ? tile(sgn(q.bowl_rating, 1), `bowling, runs saved per 100 balls${isNum(q.bowl_rank) ? ` · #${f(q.bowl_rank, 0)} of ${q.bowl_n_ranked}` : ""}`) : null));
+    },
+  };
+  (T[tab] || T.overview)();
+}
+function pvn(rows) {
+  const t = el("table", { class: "t" }, el("thead", {}, el("tr", {}, el("th", { class: "l" }, ""), el("th", {}, "Pressure balls"), el("th", {}, "Normal balls"), el("th", {}, "Difference"))));
+  const tb = el("tbody");
+  for (const [lab, a, b2, fm, good] of rows) { const d = isNum(a) && isNum(b2) && good ? a - b2 : null;
+    tb.append(el("tr", {}, el("td", { class: "l" }, lab), el("td", {}, fm(a)), el("td", {}, fm(b2)), el("td", { class: d == null ? "mut" : d * good >= 0 ? "pos" : "neg" }, d == null ? "" : (d >= 0 ? "+" : "−") + fm(Math.abs(d))))); }
+  t.append(tb); return t;
+}
+
+// ================================================================== HEAD TO HEAD
+function viewH2H(mode = "pair", a, b) {
+  mode = mode === "teams" ? "teams" : "pair";
+  crumb("Head to head", mode === "pair" ? "Batter v bowler" : "Team v team");
+  const p = page("", "grid-template-columns:minmax(0,1fr)");
+  const out = el("div");
+  const ctrl = seg([["pair", "Batter v bowler"], ["teams", "Team v team"]], mode, (v) => go("h2h/" + v));
+  if (mode === "pair") {
+    const batters = PLAYERS.filter((x) => x.bat), bowlers = PLAYERS.filter((x) => x.bowl);
+    const dl1 = el("datalist", { id: "dlb" }, batters.map((x) => el("option", { value: x.name }))), dl2 = el("datalist", { id: "dlw" }, bowlers.map((x) => el("option", { value: x.name })));
+    const find = (list, n) => (list.find((x) => x.name === n) || {}).pid;
+    const i1 = el("input", { class: "f", list: "dlb", placeholder: "Batter", value: a ? pname(a) : "", style: "min-width:220px" }), i2 = el("input", { class: "f", list: "dlw", placeholder: "Bowler", value: b ? pname(b) : "", style: "min-width:220px" });
+    const apply = () => { const x = find(batters, i1.value), y = find(bowlers, i2.value); go(`h2h/pair/${x || ""}/${y || ""}`); };
+    i1.addEventListener("change", apply); i2.addEventListener("change", apply);
+    p.style.gridTemplateRows = "auto minmax(0,1fr)";
+    p.append(el("div", { class: "card" }, el("div", { class: "hd" }, ctrl, i1, el("span", { class: "mut" }, "v"), i2, dl1, dl2)));
+    if (a && b) {
+      const m = (G.muBat.get(String(a)) || []).find((x) => String(x.bowl) === String(b));
+      const hd = el("div", { style: "display:flex;align-items:center;gap:16px;margin-bottom:14px" }, avatar(a, 64), el("b", { style: "font-size:18px" }, pname(a)), el("span", { class: "mut" }, "v"), el("b", { style: "font-size:18px" }, pname(b)), avatar(b, 64));
+      out.append(hd);
+      if (!m) out.append(el("div", { class: "empty" }, "They met for fewer than 6 balls in the data."));
+      else out.append(el("div", { class: "tiles" }, tile(m.balls, "balls"), tile(m.runs, "runs"), tile(m.outs, "dismissals"), tile(f(100 * m.runs / m.balls, 1), "strike rate"), tile(m.outs ? f(m.runs / m.outs, 1) : "–", "average"), tile(pct(m.dots / m.balls), "dot balls"), tile(`${m.fours} / ${m.sixes}`, "4s / 6s"), tile(m.p_balls, "on pressure balls")));
+      out.append(el("div", { class: "grid2", style: "margin-top:16px" }, el("div", {}, sec(`${pname(a)}: toughest bowlers (≥ 12 balls, lowest SR)`), table([{ k: "bowl", h: "Bowler", l: 1, f: (x) => pname(x.bowl) }, { k: "balls", h: "Balls" }, { k: "runs", h: "Runs" }, { k: "outs", h: "Outs" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 0) }], (G.muBat.get(String(a)) || []).filter((x) => x.balls >= 12), { sort: "sr", dir: 1, page: 12, onRow: (x) => go(`h2h/pair/${a}/${x.bowl}`) })),
+        el("div", {}, sec(`${pname(b)}: batters who scored most freely (≥ 12 balls)`), table([{ k: "bat", h: "Batter", l: 1, f: (x) => pname(x.bat) }, { k: "balls", h: "Balls" }, { k: "runs", h: "Runs" }, { k: "outs", h: "Wkts" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 0) }], (G.muBowl.get(String(b)) || []).filter((x) => x.balls >= 12), { sort: "sr", page: 12, onRow: (x) => go(`h2h/pair/${x.bat}/${b}`) }))));
+    } else {
+      out.append(sec("Most-played match-ups between top-10 players"));
+      const tb = new Set(TOP.bat.map((x) => String(x.pid))), tw = new Set(TOP.bowl.map((x) => String(x.pid)));
+      out.append(table([{ k: "bat", h: "Batter", l: 1, f: (x) => pcell(x.bat) }, { k: "bowl", h: "Bowler", l: 1, f: (x) => pcell(x.bowl) }, { k: "balls", h: "Balls" }, { k: "runs", h: "Runs" }, { k: "outs", h: "Outs" }, { k: "sr", h: "SR", sv: (x) => x.runs / x.balls, f: (x) => f(100 * x.runs / x.balls, 0) }],
+        D.matchups.filter((x) => tb.has(String(x.bat)) && tw.has(String(x.bowl))), { sort: "balls", onRow: (x) => go(`h2h/pair/${x.bat}/${x.bowl}`) }));
+    }
+    p.append(card(null, null, out, { bdClass: "scroll" }));
+    out.parentElement.style.paddingTop = "14px";
+  } else {
+    const s1 = el("select", { class: "f" }, el("option", { value: "" }, "Team A"), TEAMNAMES.map((t) => el("option", { value: t, selected: t === a ? "" : null }, t)));
+    const s2 = el("select", { class: "f" }, el("option", { value: "" }, "Team B"), TEAMNAMES.map((t) => el("option", { value: t, selected: t === b ? "" : null }, t)));
+    const apply = () => go(`h2h/teams/${encodeURIComponent(s1.value)}/${encodeURIComponent(s2.value)}`);
+    s1.onchange = apply; s2.onchange = apply;
+    p.style.gridTemplateRows = "auto minmax(0,1fr)";
+    p.append(el("div", { class: "card" }, el("div", { class: "hd" }, ctrl, s1, el("span", { class: "mut" }, "v"), s2)));
+    if (a && b) {
+      const ms = D.matches.filter((m) => (m.home === a && m.away === b) || (m.home === b && m.away === a)).sort((x, y) => y.date.localeCompare(x.date));
+      const wa = ms.filter((m) => m.winner === a).length, wb = ms.filter((m) => m.winner === b).length;
+      out.append(el("div", { class: "tiles", style: "margin-bottom:14px" }, tile(ms.length, "matches"), tile(wa, a + " wins"), tile(wb, b + " wins"), tile(ms.length - wa - wb, "no result / tie")), matchTable(ms));
+    } else out.append(el("div", { class: "empty" }, "Pick two teams"));
+    p.append(card(null, null, out));
+    out.parentElement.style.paddingTop = "14px";
+  }
+}
+function matchTable(ms, opt = {}) {
+  return table([{ k: "date", h: "Date", l: 1, f: (x) => dfmt(x.date) }, { k: "comp", h: "", l: 1, f: (x) => compChip(x.comp) }, { k: "series", h: "Series", l: 1, f: (x) => el("span", { style: "white-space:normal;display:inline-block;min-width:170px" }, x.series) },
+    { k: "bat1", h: "Batting first", l: 1, f: (x) => `${x.bat1 || "–"} ${x.s1 || ""}` }, { k: "bat2", h: "Chasing", l: 1, f: (x) => `${x.bat2 || "–"} ${x.s2 || ""}` }, { k: "result", h: "Result", l: 1, f: (x) => el("span", { style: "white-space:normal;display:inline-block;min-width:150px" }, x.result || "–") },
+    { k: "imp", h: "Big match", l: 1, f: (x) => x.imp > 0 ? el("span", { class: "chip top" }, x.imp_why) : "" }], ms, { sort: "date", page: opt.page || 80, onRow: (x) => go("matches/" + x.id), hl: opt.hl });
+}
+
+// ================================================================== TEAMS
+function viewTeams(team) {
+  const list = D.teamNow.slice().sort((a, b) => b.rating - a.rating);
+  team = team || list[0].team;
+  crumb("Teams", team);
+  const p = page("", "grid-template-columns:290px minmax(0,1fr)");
+  const hi = list[0].rating, lo = list[list.length - 1].rating;
+  const L = el("div", { class: "list" }, list.map((t, i) => el("div", { class: "li" + (t.team === team ? " on" : ""), onclick: () => go("teams/" + encodeURIComponent(t.team)) },
+    el("span", { class: "mut", style: "width:20px;text-align:right" }, i + 1), el("div", { style: "min-width:0;flex:1" }, el("div", { class: "nm" }, t.team), el("div", { class: "minibar" }, el("i", { style: `width:${Math.round(100 * (t.rating - lo) / (hi - lo))}%;background:${t.plays === "IPL" ? COL.yellow : COL.aqua}` }))),
+    el("div", { class: "end" }, f(t.rating, 1)))));
+  p.append(card("Team rating", "expected margin vs an average side (runs)", L));
+  const t = TEAMS.get(team) || {}, now = TNOW.get(team) || {};
+  const det = el("div", { class: "card" });
+  det.append(el("div", { class: "hero" }, el("div", { class: "av ini", style: "width:72px;height:72px;font-size:24px" }, team.split(" ").map((x) => x[0]).join("").slice(0, 3)),
+    el("div", {}, el("h1", {}, team), el("div", { class: "meta" }, `${t.mat} matches · won ${t.w}, lost ${t.l}${t.nr ? `, no result ${t.nr}` : ""} · ${t.comp}`))));
+  det.append(el("div", { class: "tiles", style: "padding:12px 16px 4px" }, tile(f(now.rating, 1) + ` <small>± ${f(now.sd, 1)}</small>`, "rating: expected margin vs an average side (runs)"), tile(pct(now.p_beat_avg), "chance to beat an average side"),
+    tile(f(t.opp_value, 2), "opposition weight in ratings"), tile(pct(t.win_bat1), "win % batting first"), tile(pct(t.win_chase), "win % chasing"), tile(pct(t.w / Math.max(1, t.w + t.l)), "win % overall")));
+  const [, , tab0] = location.hash.replace(/^#\/?/, "").split("/"); const tab = tab0 || "rating";
+  det.append(tabs([["rating", "Rating over time"], ["h2h", "Head to head"], ["players", "Top players"], ["matches", "Matches"]], tab, (k) => go(`teams/${encodeURIComponent(team)}/${k}`)));
+  const body = el("div", { class: "bd", style: "padding-top:14px" }); det.append(body); p.append(det);
+  if (tab === "rating") {
+    const pts = (G.teamHist.get(team) || []).map((x) => ({ d: x.date, y: x.rating, lo: x.rating - x.sd, hi: x.rating + x.sd }));
+    body.append(sec("Team rating after each match (band = ± 1 sd)"), lineChart([{ name: team, color: COL.blue, pts }], { zero: true }),
+      el("div", { class: "mut", style: "font-size:12px" }, "A Kalman-filter team rating from winning margins (chases converted to runs) plus the quality of the playing XI. It is shown for context and is not part of the player ranking."));
+  } else if (tab === "h2h") {
+    body.append(table([{ k: "opp", h: "Opponent", l: 1, f: (x) => el("a", { href: `#/h2h/teams/${encodeURIComponent(team)}/${encodeURIComponent(x.opp)}` }, x.opp) }, { k: "mat", h: "M" }, { k: "w", h: "W" }, { k: "l", h: "L" }, { k: "pct", h: "Win %", sv: (x) => x.w / Math.max(1, x.w + x.l), f: (x) => pct(x.w / Math.max(1, x.w + x.l)) }], G.h2h.get(team) || [], { sort: "mat" }));
+  } else if (tab === "players") {
+    body.append(el("div", { class: "grid2" }, el("div", {}, sec("Most runs"), table([{ k: "pid", h: "Batter", l: 1, f: (x) => pcell(x.pid) }, { k: "inn", h: "Inn" }, { k: "runs", h: "Runs" }], G.teamBat.get(team) || [], { sort: "runs", onRow: (x) => go("player/" + x.pid) })),
+      el("div", {}, sec("Most wickets"), table([{ k: "pid", h: "Bowler", l: 1, f: (x) => pcell(x.pid) }, { k: "inn", h: "Inn" }, { k: "wk", h: "Wkts" }], G.teamBowl.get(team) || [], { sort: "wk", onRow: (x) => go("player/" + x.pid) }))));
+  } else body.append(matchTable(D.matches.filter((m) => m.home === team || m.away === team)));
+}
+
+// ================================================================== GROUNDS
+function viewGrounds(id) {
+  const list = D.venues.slice().sort((a, b) => b.mat - a.mat);
+  id = String(id || list[0].id);
+  const v = VEN.get(id) || list[0];
+  crumb("Grounds", v.label);
+  const p = page("", "grid-template-columns:290px minmax(0,1fr)");
+  let q = ""; const box = el("div", { class: "list" });
+  const draw = () => box.replaceChildren(...list.filter((x) => !q || (x.label + " " + (x.home || "")).toLowerCase().includes(q)).map((x) => el("div", { class: "li" + (String(x.id) === id ? " on" : ""), onclick: () => go("grounds/" + x.id) },
+    el("div", { style: "min-width:0" }, el("div", { class: "nm" }, x.label), el("div", { class: "meta" }, x.home ? "usual home: " + x.home : x.country)), el("div", { class: "end mut" }, x.mat))));
+  draw();
+  p.append(el("div", { class: "card" }, el("div", { class: "hd" }, el("input", { class: "f", style: "width:100%", placeholder: "Find a ground or home side", oninput: (e) => { q = e.target.value.toLowerCase(); draw(); } })), el("div", { class: "bd" }, box)));
+  const det = el("div", { class: "card" });
+  det.append(el("div", { class: "hero" }, el("div", { class: "av ini", style: "width:64px;height:64px;font-size:20px" }, "G"), el("div", {}, el("h1", {}, v.label), el("div", { class: "meta" }, `${v.country}${v.home ? " · usual home of " + v.home : ""} · ${v.mat} matches (${v.ipl} IPL, ${v.t20i} T20I) · ${dfmt(v.first)} – ${dfmt(v.last)}`))));
+  const body = el("div", { class: "bd", style: "padding-top:14px" });
+  body.append(el("div", { class: "tiles" }, tile(f(v.avg1, 0), "average 1st-innings score"), tile(`${f0(v.hi1)} / ${f0(v.lo1)}`, "highest / lowest 1st innings"), tile(pct(v.bat1_win), "won batting first"), tile(pct(v.toss_field), "toss winners who fielded"), tile(pct(v.spin_share), "wickets to spin")));
+  body.append(el("div", { class: "grid2", style: "margin-top:14px;align-items:start" },
+    el("div", {}, sec("Run rate by phase"), vbars([["Powerplay", v.rr_powerplay], ["Middle", v.rr_middle], ["Death", v.rr_death]].map(([x, y]) => ({ x, v: y, label: f(y, 2), color: COL.blue, tip: `<b>${x}</b>${f(y, 2)} runs per over` })), { h: 180, tf: (t) => f(t, 0) })),
+    el("div", {}, sec("Pace and spin"), table([{ k: "k", h: "", l: 1 }, { k: "w", h: "Wickets" }, { k: "e", h: "Economy", f: (x) => f(x.e, 2) }], [{ k: "Pace", w: v.wk_pace, e: v.econ_pace }, { k: "Spin", w: v.wk_spin, e: v.econ_spin }]),
+      sec("Leading run-scorers"), table([{ k: "pid", h: "Batter", l: 1, f: (x) => pcell(x.pid) }, { k: "inn", h: "Inn" }, { k: "runs", h: "Runs" }, { k: "hs", h: "HS" }], G.venueBat.get(id) || [], { sort: "runs", onRow: (x) => go("player/" + x.pid) }),
+      sec("Leading wicket-takers"), table([{ k: "pid", h: "Bowler", l: 1, f: (x) => pcell(x.pid) }, { k: "inn", h: "Inn" }, { k: "wk", h: "Wkts" }, { k: "econ", h: "Econ", sv: (x) => x.runs / x.balls, f: (x) => f(6 * x.runs / x.balls, 2) }], G.venueBowl.get(id) || [], { sort: "wk", onRow: (x) => go("player/" + x.pid) }))));
+  body.append(sec("Matches here"), matchTable(D.matches.filter((m) => String(m.venue) === id)));
+  det.append(body); p.append(det);
+}
+
+// ================================================================== MATCHES
+let MF = { season: "", comp: "", big: false, q: "" };
+function viewMatches(id) {
+  const mm0 = MATCH.get(String(id)); crumb("Matches", mm0 ? `${mm0.bat1 || mm0.home} v ${mm0.bat2 || mm0.away}` : "All");
+  const p = page("", "grid-template-columns:minmax(0,1fr) 380px");
+  const holder = el("div");
+  const draw = () => { const ms = D.matches.filter((m) => (!MF.season || m.season === MF.season) && (!MF.comp || m.comp === MF.comp) && (!MF.big || m.imp > 0) && (!MF.q || `${m.home} ${m.away} ${m.series}`.toLowerCase().includes(MF.q)));
+    holder.replaceChildren(el("div", { class: "mut", style: "font-size:12px;margin-bottom:6px" }, `${ms.length} matches`), matchTable(ms, { page: 120, hl: (m) => String(m.id) === String(id) })); };
+  const ctrl = [el("input", { class: "f", placeholder: "Team or series", value: MF.q, oninput: (e) => { MF.q = e.target.value.toLowerCase(); draw(); } }),
+    el("select", { class: "f", onchange: (e) => { MF.season = e.target.value; draw(); } }, el("option", { value: "" }, "All seasons"), D.meta.seasons.map((s) => el("option", { value: s, selected: s === MF.season ? "" : null }, s))),
+    el("select", { class: "f", onchange: (e) => { MF.comp = e.target.value; draw(); } }, ["", "IPL", "T20I", "Other T20"].map((c) => el("option", { value: c, selected: c === MF.comp ? "" : null }, c || "All competitions"))),
+    el("label", { style: "display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--text2)" }, el("input", { type: "checkbox", checked: MF.big ? "" : null, onchange: (e) => { MF.big = e.target.checked; draw(); } }), "Big matches only")];
+  draw();
+  p.append(card("Matches", "", holder, { right: ctrl }));
+  const m = MATCH.get(String(id));
+  const det = el("div");
+  if (!m) det.append(el("div", { class: "empty" }, "Select a match to see its details"));
+  else {
+    const res = (t) => m.winner === t ? el("span", { class: "chip", style: "background:#0ca30c26;color:#5fd35f" }, "won") : null;
+    det.append(el("div", { style: "display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" }, compChip(m.comp), m.imp > 0 ? el("span", { class: "chip top" }, m.imp_why) : null, m.stage && !["League", "Others"].includes(m.stage) ? el("span", { class: "chip" }, m.stage) : null));
+    det.append(el("div", { class: "mut", style: "font-size:12.5px" }, `${dfmt(m.date)} · ${m.series}`), el("div", { class: "mut", style: "font-size:12.5px;margin-bottom:12px" }, el("a", { href: "#/grounds/" + m.venue }, D.venueLabel[m.venue] || "ground")));
+    for (const [t, s] of [[m.bat1 || m.home, m.s1], [m.bat2 || m.away, m.s2]]) det.append(el("div", { class: "tile", style: "display:flex;align-items:center;gap:10px;margin-bottom:8px" }, el("div", { style: "flex:1" }, el("a", { href: "#/teams/" + encodeURIComponent(t || ""), style: "font-weight:600" }, t || "–"), el("div", { class: "v" }, s || "–")), res(t)));
+    det.append(el("p", { style: "font-weight:600;margin:12px 0" }, m.result || ""));
+    det.append(el("div", { class: "tiles", style: "grid-template-columns:1fr 1fr" }, [tile(m.top_bat || "–", "top scorer"), tile(m.top_bowl || "–", "best bowling"), tile(m.mom || "–", "Player of the Match"), tile(`${m.toss || "–"}`, `won toss, chose ${(m.toss_opt || "").toLowerCase()}`)].map((t) => (t.classList.add("sm"), t))));
+    const perf = [...(D.bestBat.filter((x) => x.match_id === m.id)), ...(D.bestBowl.filter((x) => x.match_id === m.id))];
+    if (perf.length) det.append(sec("Notable pressure performances"), el("div", { class: "list" }, perf.sort((a, b) => b.p_val - a.p_val).slice(0, 8).map((x) => el("div", { class: "li", onclick: () => go("player/" + x.pid) }, avatar(x.pid, 30),
+      el("div", { style: "min-width:0" }, el("div", { class: "nm" }, pname(x.pid)), el("div", { class: "meta" }, "runs" in x && "out" in x ? `${x.runs}${x.out ? "" : "*"} (${x.balls})` : `${x.wk}/${x.runs} (${ov(x.balls)} ov)`)), el("div", { class: "end" }, sgn(x.p_val, 1))))));
+  }
+  p.append(card("Match", m ? "" : "", det));
+}
+
+// ================================================================== METHOD
+function viewMethod(tab = "formula") {
+  crumb("Method", { formula: "The formula", reliability: "Reliability", figures: "Figures" }[tab] || "The formula");
+  const p = page("", "grid-template-columns:minmax(0,1fr)");
+  const c = el("div", { class: "card" });
+  c.append(tabs([["formula", "The formula"], ["reliability", "Reliability"], ["figures", "Figures"]], tab, (k) => go("method/" + k)));
+  const body = el("div", { class: "bd", style: "padding-top:16px" }); c.append(body); p.append(c);
+  if (tab === "formula") {
+    const F = [
+      ["1", "Win probability and leverage", "WP<sub>t</sub> = σ(β · x<sub>t</sub>) &nbsp;&nbsp; ΔWP<sub>t</sub> = Σ<sub>o</sub> P(o | phase, innings, wickets) · |WP(s<sub>t</sub> ⊕ o) − WP(s<sub>t</sub>)| &nbsp;&nbsp; Lev<sub>t</sub> = ΔWP<sub>t</sub> / mean ΔWP", "Leverage is how much this ball can swing the result. 1.0 is an average ball. In the first innings it is compared with the average for the same over, so openers are not pressured just for batting first."],
+      ["2", "Pressure index", "Π<sub>t</sub> = Lev<sub>t</sub> · (1 + Σ<sub>k</sub> w<sub>k</sub> s<sub>k,t</sub>) &nbsp;&nbsp; pressure ball ⇔ Π<sub>t</sub> ≥ 80th percentile within the innings", "s<sub>k</sub> are situations (required rate ≥ 10, batting out of position, just conceded a boundary …). Each weight w<sub>k</sub> is the measured rise in dismissals and dots (or runs conceded) for the same player, kept only if its 95% interval shows the ball is harder."],
+      ["3", "Value of a ball", "v<sup>bat</sup> = (runs − r̂) − c · (out − p̂<sub>out</sub>) &nbsp;&nbsp; v<sup>bowl</sup> = (ĉ − conceded) + c · q · (wicket − p̂<sub>wkt</sub>) &nbsp;&nbsp; c = R(u, w) − R(u, w+1)", "r̂, p̂ come from a model of an average player in the same spot (over, wickets, required rate, ground, era, opponent quality), always fitted on other matches. c is the run cost of a wicket from a DLS-style resource curve R; q scales a wicket by the batter's quality."],
+      ["4", "Weights", "ω<sub>t</sub> = 0.5<sup>age/2y</sup> · 2σ(θ<sub>opp</sub> − θ<sub>avg</sub>)", "Recent balls count more, and so do balls against strong sides (about 1.33 for India or England, 0.5 for Zimbabwe), from a Bradley–Terry model of all results."],
+      ["5", "Components", "P = Σ ω√Π · v / (Σ ω√Π + k) &nbsp; D = pressure − normal &nbsp; C = positive matches share &nbsp; M = ln(1 + matches) &nbsp; B = big-match value &nbsp; A, F, S (bat) &nbsp; R, S (bowl)", "Every component is shrunk towards an average player (k = noise ÷ signal variance, estimated from the data), so short hot streaks cannot top the list."],
+      ["6", "Reliability Index", "I = ½ · I<sub>all matches</sub> + ½ · I<sub>without best match</sub> + bonus &nbsp;&nbsp; I = Σ W<sub>c</sub> · z<sub>c</sub>", "Batters: P 0.25, A 0.20, F 0.10, S 0.15, B 0.10, D 0.05, C 0.05, M 0.10. Bowlers: P 0.35, R 0.15, S 0.10, B 0.10, D 0.10, C 0.10, M 0.10. The bonus (≤ 0.15) rewards players who were positive under pressure season after season."],
+      ["7", "Eligibility and final order", "≥ 100 pressure balls · in ≥ 10 matches · played in 2025 or 2026 &nbsp;&nbsp; |I − I<sub>(10)</sub>| ≤ 0.02 ⇒ order by bootstrap P(top 10)", `${D.rbat.length} batters and ${D.rbowl.length} bowlers qualify.`]];
+    body.append(el("div", { style: "max-width:1000px" }, F.map(([n, t, eq, txt]) => el("div", { class: "formula" }, el("h4", {}, el("span", {}, n), t), el("div", { class: "eq", html: eq }), el("p", { html: txt })))));
+  } else if (tab === "reliability") {
+    for (const side of ["bat", "bowl"]) {
+      const v = D.variants[side], tops = TOP[side];
+      const tbl = el("table", { class: "t heat" }, el("thead", {}, el("tr", {}, el("th", { class: "l" }, "Alternative definition"), el("th", {}, "Overlap"), tops.map((r) => el("th", { title: r.name }, r.name.split(" ").slice(-1)[0])))));
+      const tb = el("tbody");
+      for (const r of v) { const tr = el("tr", {}, el("td", { class: "l" }, r.variant), el("td", {}, `${r.overlap_top10}/10`));
+        tops.forEach((_, i) => { const k = r["rank_of_" + (i + 1)]; const a = isNum(k) ? Math.max(.08, 1 - Math.log(k) / Math.log(60)) : 0; tr.append(el("td", { style: `background:rgba(57,135,229,${a.toFixed(2)});color:${a > .55 ? "#fff" : "var(--text2)"}` }, isNum(k) ? k : "n/e")); });
+        tb.append(tr); }
+      tbl.append(tb);
+      body.append(sec(`${side === "bat" ? "Batters" : "Bowlers"}: rank of each final top-10 player under alternative definitions`), el("div", { class: "scroll" }, tbl));
+    }
+    body.append(el("div", { class: "prose", style: "margin-top:16px" }, el("p", {}, "Split-half consistency of the index (odd vs even matches): +0.12 for batters, +0.24 for bowlers. The record parts repeat best (matches +0.65 / +0.69, pressure value +0.23 / +0.16, team share +0.22 / +0.21). A pure ‘clutch’ gap is indistinguishable from chance (shuffle test p = 0.46 / 0.37), so the index rewards being consistently good on pressure balls rather than the gap itself."),
+      el("p", {}, "Out-of-time check (rated on matches before 2026, scored on 2026): bowlers +0.26 (economy +0.19, wicket rate +0.01); batters +0.09 (batting average +0.20). All intervals are wide."), el("a", { href: "#/method/figures" }, "See the figures →")));
+  } else {
+    const groups = [["all", "All"], ["pressure", "Pressure"], ["model", "Model"], ["evidence", "Evidence"], ["reliability", "Reliability"]];
+    const holder = el("div", { style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;margin-top:12px" });
+    const draw = (g) => holder.replaceChildren(...D.figs.filter((x) => g === "all" || x.group === g).map((x) => el("div", {}, el("div", { class: "fig", onclick: () => { const lb = $("#lightbox"); $("img", lb).src = x.src; lb.style.display = "grid"; } }, el("img", { src: x.src, alt: x.caption, loading: "lazy" })), el("div", { class: "figcap" }, x.caption))));
+    body.append(seg(groups, "all", draw), holder); draw("all");
+  }
+}
+
+// ------------------------------------------------------------------ start
+buildNav(); setupSearch();
+$("#burger").addEventListener("click", () => document.body.classList.toggle("navopen"));
+$("#lightbox").addEventListener("click", () => { $("#lightbox").style.display = "none"; });
+addEventListener("hashchange", route);
+let rz; addEventListener("resize", () => { hideTip(); clearTimeout(rz); rz = setTimeout(route, 200); });
+route();
+</script>
+</body>
+</html>
