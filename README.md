@@ -1,6 +1,6 @@
 # Pressure Lab — SupeRR Selector S2
 
-Interactive dashboard: **https://USERNAME.github.io/REPO/**
+Interactive dashboard: **https://divyansh1010x.github.io/PressureAnalysis/**
 
 Ranks the top 10 T20 batters and bowlers under pressure (IPL + T20I, 2022–2026).
 
